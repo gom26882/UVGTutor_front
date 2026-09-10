@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuto UVG - Buscar Tutores</title>
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+
+<body> 
+    <header>
+        <h1>Tuto UVG</h1>
+        <nav>
+            <a href="buscar_tutores.html">Buscar</a>
+            <a href="historial.html">Historial</a>
+        </nav>
+    </header>
+
+    <main>
+        <h2>Búsqueda de tutores</h2>
+
+        <div class="busqueda">
+            <input type="text" id="busqueda" placeholder="Buscar curso">
+            <button id="btn_buscar">Buscar</button>
+        </div>
+
+        <section class="contenido_busqueda">
+            <aside class="filtros">
+                <h3>Filtros</h3>
+
+                <label>Curso</label>
+                <select id="curso">
+                    <option value="">Todos</option>
+                    <option value="calculo">Cálculo</option>
+                    <option value="fisica">Física</option>
+                    <option value="programacion">Programación</option>
+                </select>
+
+                <label>Modalidad</label>
+                <select id="modalidad">
+                    <option value="">Todas</option>
+                    <option value="virtual">Virtual</option>
+                    <option value="presencial">Presencial</option>
+                </select>
+
+                <label>Precio máximo</label>
+                <input type="number" id="precio" placeholder="Q">
+            </aside>
+
+            <section>
+                <h3>Resultados</h3>
+
+                <article class="tarjeta_tutor">
+                    <div class="foto">Foto</div>
+                    <div>
+                        <h3>Juan Pérez</h3>
+                        <p>Cálculo I / Física I</p>
+                        <p>Q100 / hora</p>
+                        <p>★★★★★</p>
+                        <a href="perfil_tutor.html">Ver perfil</a>
+                    </div>
+                </article>
+            </section>
+        </section>
+    </main>
+
+    <script src="js/backend.js"></script>
+    <script src="js/buscar_tutores.js"></script>
+</body>
+</html>

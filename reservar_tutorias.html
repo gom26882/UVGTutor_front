@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuto UVG - Reservar</title>
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+
+<body>
+    <header>
+        <h1>Reservar tutoría con Juan Pérez</h1>
+        <a href="perfil_tutor.html">Volver</a>
+    </header>
+
+    <main>
+        <form id="form_reserva">
+
+            <section>
+                <h2>Fecha / Hora</h2>
+
+                <label>Fecha</label>
+                <input type="date" id="fecha" required>
+
+                <label>Hora</label>
+                <input type="time" id="hora" required>
+            </section>
+
+            <section>
+                <h2>Curso a tratar</h2>
+
+                <select id="curso">
+                    <option>Cálculo I</option>
+                    <option>Física I</option>
+                </select>
+
+                <h2>Modalidad</h2>
+
+                <select id="modalidad">
+                    <option>Virtual</option>
+                    <option>Presencial</option>
+                </select>
+
+                <h2>Detalles</h2>
+                <textarea id="detalles" placeholder="Temas que deseas trabajar"></textarea>
+            </section>
+
+            <button type="submit">Confirmar</button>
+        </form>
+    </main>
+
+    <script src="js/backend.js"></script>
+    <script src="js/reservar_tutoria.js"></script>
+</body>
+</html>
