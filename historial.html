@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuto UVG | Mis tutorías</title>
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+    <header class="encabezado">
+        <a class="marca" href="buscar_tutores.html">
+            <span class="marca-icono">UVG</span>
+            <span>Tuto UVG</span>
+        </a>
+        <nav class="navegacion">
+            <a href="buscar_tutores.html">Explorar</a>
+            <a href="historial.html">Mis tutorías</a>
+            <a href="panel_tutor.html">Panel tutor</a>
+        </nav>
+        <span class="usuario-chip" id="usuario-chip">Estudiante UVG</span>
+    </header>
+
+    <main class="contenedor">
+        <div class="titulo-pagina">
+            <div>
+                <span class="eyebrow">Tu progreso</span>
+                <h1>Mis tutorías</h1>
+                <p class="subtitulo">Consulta tus solicitudes y sesiones.</p>
+            </div>
+            <a class="boton" href="buscar_tutores.html">Buscar tutores</a>
+        </div>
+
+        <section class="panel tabla-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tutor</th>
+                        <th>Curso</th>
+                        <th>Fecha</th>
+                        <th>Modalidad</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-historial"></tbody>
+            </table>
+        </section>
+    </main>
+    <script src="js/app.js"></script>
+</body>
+</html>

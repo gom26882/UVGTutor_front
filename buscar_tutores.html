@@ -3,68 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tuto UVG - Buscar Tutores</title>
+    <title>Tuto UVG | Buscar tutores</title>
     <link rel="stylesheet" href="css/estilos.css">
 </head>
-
-<body> 
-    <header>
-        <h1>Tuto UVG</h1>
-        <nav>
-            <a href="buscar_tutores.html">Buscar</a>
-            <a href="historial.html">Historial</a>
+<body>
+    <header class="encabezado">
+        <a class="marca" href="buscar_tutores.html">
+            <span class="marca-icono">UVG</span>
+            <span>Tuto UVG</span>
+        </a>
+        <nav class="navegacion">
+            <a href="buscar_tutores.html">Explorar</a>
+            <a href="historial.html">Mis tutorías</a>
+            <a href="panel_tutor.html">Panel tutor</a>
         </nav>
+        <span class="usuario-chip" id="usuario-chip">Estudiante UVG</span>
     </header>
 
-    <main>
-        <h2>Búsqueda de tutores</h2>
+    <main class="contenedor">
+        <section class="hero hero-compacto">
+            <span class="eyebrow">Encuentra apoyo académico</span>
+            <h1>El tutor indicado para tu siguiente reto.</h1>
+            <p>
+                Explora perfiles, compara modalidades y encuentra un horario
+                que funcione para ti.
+            </p>
+        </section>
 
-        <div class="busqueda">
-            <input type="text" id="busqueda" placeholder="Buscar curso">
-            <button id="btn_buscar">Buscar</button>
-        </div>
+        <section class="seccion-busqueda">
+            <div class="barra-busqueda">
+                <input id="busqueda" type="search" placeholder="Busca por tutor o curso">
+                <button class="boton" id="btn-buscar" type="button">Buscar</button>
+            </div>
 
-        <section class="contenido_busqueda">
-            <aside class="filtros">
-                <h3>Filtros</h3>
-
-                <label>Curso</label>
-                <select id="curso">
-                    <option value="">Todos</option>
-                    <option value="calculo">Cálculo</option>
-                    <option value="fisica">Física</option>
-                    <option value="programacion">Programación</option>
-                </select>
-
-                <label>Modalidad</label>
-                <select id="modalidad">
-                    <option value="">Todas</option>
-                    <option value="virtual">Virtual</option>
-                    <option value="presencial">Presencial</option>
-                </select>
-
-                <label>Precio máximo</label>
-                <input type="number" id="precio" placeholder="Q">
-            </aside>
-
-            <section>
-                <h3>Resultados</h3>
-
-                <article class="tarjeta_tutor">
-                    <div class="foto">Foto</div>
-                    <div>
-                        <h3>Juan Pérez</h3>
-                        <p>Cálculo I / Física I</p>
-                        <p>Q100 / hora</p>
-                        <p>★★★★★</p>
-                        <a href="perfil_tutor.html">Ver perfil</a>
+            <div class="contenido-busqueda">
+                <aside class="panel filtros">
+                    <h3>Filtros</h3>
+                    <div class="campo">
+                        <label for="curso">Curso</label>
+                        <select id="curso">
+                            <option value="">Todos los cursos</option>
+                            <option>Cálculo I</option>
+                            <option>Física I</option>
+                            <option>Programación</option>
+                            <option>POO</option>
+                            <option>Química</option>
+                            <option>Precálculo</option>
+                        </select>
                     </div>
-                </article>
-            </section>
+                    <div class="campo">
+                        <label for="modalidad">Modalidad</label>
+                        <select id="modalidad">
+                            <option value="">Todas</option>
+                            <option>Virtual</option>
+                            <option>Presencial</option>
+                        </select>
+                    </div>
+                    <div class="campo">
+                        <label for="precio">
+                            Precio máximo: <span class="rango" id="precio-valor">Q150</span>
+                        </label>
+                        <input id="precio" type="range" min="50" max="150" step="5" value="150">
+                    </div>
+                    <button class="boton secundario ancho" id="btn-limpiar" type="button">
+                        Limpiar filtros
+                    </button>
+                </aside>
+
+                <section>
+                    <div class="titulo-pagina">
+                        <div>
+                            <span class="eyebrow">Selección de la comunidad</span>
+                            <h2>Tutores recomendados</h2>
+                        </div>
+                        <span class="subtitulo" id="contador"></span>
+                    </div>
+                    <div class="resultados" id="lista-tutores"></div>
+                </section>
+            </div>
         </section>
     </main>
-
-    <script src="js/backend.js"></script>
-    <script src="js/buscar_tutores.js"></script>
+    <footer class="pie">Tuto UVG | Hecho para aprender en comunidad</footer>
+    <script src="js/app.js"></script>
 </body>
 </html>

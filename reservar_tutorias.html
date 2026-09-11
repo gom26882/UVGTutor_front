@@ -3,53 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tuto UVG - Reservar</title>
+    <title>Tuto UVG | Reservar tutoría</title>
     <link rel="stylesheet" href="css/estilos.css">
 </head>
-
 <body>
-    <header>
-        <h1>Reservar tutoría con Juan Pérez</h1>
-        <a href="perfil_tutor.html">Volver</a>
+    <header class="encabezado">
+        <a class="marca" href="buscar_tutores.html">
+            <span class="marca-icono">UVG</span>
+            <span>Tuto UVG</span>
+        </a>
+        <nav class="navegacion">
+            <a href="buscar_tutores.html">Explorar</a>
+            <a href="historial.html">Mis tutorías</a>
+        </nav>
+        <span class="usuario-chip" id="usuario-chip">Estudiante UVG</span>
     </header>
 
-    <main>
-        <form id="form_reserva">
+    <main class="contenedor">
+        <div class="titulo-pagina">
+            <div>
+                <span class="eyebrow">Último paso</span>
+                <h1>Reserva con <span id="reserva-tutor">tu tutor</span></h1>
+            </div>
+            <a class="boton secundario" href="perfil_tutor.html">Volver al perfil</a>
+        </div>
 
-            <section>
-                <h2>Fecha / Hora</h2>
-
-                <label>Fecha</label>
-                <input type="date" id="fecha" required>
-
-                <label>Hora</label>
-                <input type="time" id="hora" required>
+        <form class="formulario" id="form-reserva">
+            <section class="panel">
+                <h2>Fecha y formato</h2>
+                <div class="campo">
+                    <label for="fecha">Fecha</label>
+                    <input id="fecha" type="date" required>
+                </div>
+                <div class="campo">
+                    <label for="hora">Hora</label>
+                    <input id="hora" type="time" required>
+                </div>
+                <div class="campo">
+                    <label for="modalidad">Modalidad</label>
+                    <select id="modalidad" required>
+                        <option>Virtual</option>
+                        <option>Presencial</option>
+                    </select>
+                </div>
             </section>
 
-            <section>
-                <h2>Curso a tratar</h2>
-
-                <select id="curso">
-                    <option>Cálculo I</option>
-                    <option>Física I</option>
-                </select>
-
-                <h2>Modalidad</h2>
-
-                <select id="modalidad">
-                    <option>Virtual</option>
-                    <option>Presencial</option>
-                </select>
-
-                <h2>Detalles</h2>
-                <textarea id="detalles" placeholder="Temas que deseas trabajar"></textarea>
+            <section class="panel">
+                <h2>Qué necesitas trabajar</h2>
+                <div class="campo">
+                    <label for="curso">Curso</label>
+                    <select id="curso" required></select>
+                </div>
+                <div class="campo">
+                    <label for="detalles">Detalles para el tutor</label>
+                    <textarea
+                        id="detalles"
+                        placeholder="Ej. Quiero repasar derivadas antes del parcial"
+                    ></textarea>
+                </div>
             </section>
 
-            <button type="submit">Confirmar</button>
+            <section class="panel ancho-completo">
+                <div class="resumen-reserva">
+                    <span class="eyebrow">Resumen de solicitud</span>
+                    <h3>Datos de la tutoría</h3>
+                    <p>
+                        <strong>Tutor:</strong> <span id="resumen-tutor"></span>
+                        <span class="separador">|</span>
+                        <strong>Precio:</strong> <span id="resumen-precio"></span> por hora
+                    </p>
+                </div>
+                <div class="acciones">
+                    <button class="boton" type="submit">Confirmar solicitud</button>
+                    <a class="boton secundario" href="buscar_tutores.html">Cancelar</a>
+                </div>
+            </section>
         </form>
     </main>
-
-    <script src="js/backend.js"></script>
-    <script src="js/reservar_tutoria.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>

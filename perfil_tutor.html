@@ -3,60 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tuto UVG - Perfil</title>
+    <title>Tuto UVG | Perfil del tutor</title>
     <link rel="stylesheet" href="css/estilos.css">
 </head>
-
 <body>
-    <header>
-        <h1>Tuto UVG - Perfil</h1>
-        <a href="buscar_tutores.html">Volver</a>
+    <header class="encabezado">
+        <a class="marca" href="buscar_tutores.html">
+            <span class="marca-icono">UVG</span>
+            <span>Tuto UVG</span>
+        </a>
+        <nav class="navegacion">
+            <a href="buscar_tutores.html">Explorar</a>
+            <a href="historial.html">Mis tutorías</a>
+            <a href="panel_tutor.html">Panel tutor</a>
+        </nav>
+        <span class="usuario-chip" id="usuario-chip">Estudiante UVG</span>
     </header>
 
-    <main>
-        <section class="perfil_tutor">
-
+    <main class="contenedor">
+        <div class="titulo-pagina">
             <div>
-                <div class="foto_grande">Foto</div>
-                <h2 id="nombre_tutor">Juan Pérez</h2>
-
-                <p><strong>Especialidad:</strong> Cálculo y Física</p>
-                <p><strong>Modalidad:</strong> Virtual / Presencial</p>
-                <p><strong>Precio:</strong> Q100 / hora</p>
-
-                <a href="reservar_tutoria.html">
-                    <button>Reservar tutoría</button>
-                </a>
+                <span class="eyebrow">Conoce a tu tutor</span>
+                <h1>Perfil del tutor</h1>
             </div>
+            <a class="boton secundario" href="buscar_tutores.html">Volver</a>
+        </div>
 
-            <div>
-                <h3>Experiencia</h3>
-                <p>Experiencia en tutorías de matemática y física.</p>
-
-                <h3>Galería</h3>
-                <div class="galeria">
-                    <div>Imagen</div>
-                    <div>Imagen</div>
-                </div>
-            </div>
-
-            <aside>
-                <h3>Calendario</h3>
-                <input type="date">
-
-                <h3>Horarios disponibles</h3>
-                <button>14:00</button>
-                <button>15:00</button>
-                <button>16:00</button>
-
-                <h3>Calificación</h3>
-                <p>★★★★★</p>
+        <section class="perfil-grid">
+            <aside class="panel perfil-resumen">
+                <div class="avatar grande" id="avatar-tutor">JP</div>
+                <h2 id="nombre-tutor">Juan Pérez</h2>
+                <p class="calificacion" id="rating-tutor">4.9 de 5</p>
+                <ul class="lista-limpia">
+                    <li><strong>Cursos</strong><br><span class="subtitulo" id="cursos-tutor"></span></li>
+                    <li><strong>Modalidad</strong><br><span class="subtitulo" id="modalidad-tutor"></span></li>
+                    <li><strong>Precio</strong><br><span class="subtitulo" id="precio-tutor"></span></li>
+                </ul>
             </aside>
 
+            <article class="panel">
+                <h2>Sobre mí</h2>
+                <p class="subtitulo">
+                    Me gusta explicar los temas con ejemplos sencillos y ejercicios
+                    progresivos. La meta no es memorizar: es comprender por qué funciona.
+                </p>
+                <h3>Lo que trabajaremos</h3>
+                <div class="etiquetas">
+                    <span class="etiqueta">Repaso de teoría</span>
+                    <span class="etiqueta">Ejercicios guiados</span>
+                    <span class="etiqueta">Preparación de parciales</span>
+                </div>
+                <div class="bloque-metodo">
+                    <span class="eyebrow">Método de trabajo</span>
+                    <h3>Comprender, practicar y aplicar.</h3>
+                    <p class="subtitulo">
+                        Cada sesión parte de tus dudas y termina con un plan claro
+                        para seguir practicando.
+                    </p>
+                </div>
+            </article>
+
+            <aside class="panel">
+                <h3>Elige un horario</h3>
+                <div class="campo">
+                    <label for="fecha-perfil">Fecha</label>
+                    <input id="fecha-perfil" type="date">
+                </div>
+                <div class="horarios">
+                    <button class="hora" data-hora="14:00" type="button">14:00</button>
+                    <button class="hora" data-hora="15:00" type="button">15:00</button>
+                    <button class="hora" data-hora="16:00" type="button">16:00</button>
+                </div>
+                <a class="boton ancho margen-superior" id="reservar" href="reservar_tutorias.html">
+                    Reservar tutoría
+                </a>
+            </aside>
         </section>
     </main>
-
-    <script src="js/backend.js"></script>
-    <script src="js/perfil_tutor.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
