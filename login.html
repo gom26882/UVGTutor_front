@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuto UVG | Iniciar sesión</title>
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+    <main class="login">
+        <section class="login-arte">
+            <div class="login-contenido">
+                <span class="eyebrow">Comunidad UVG</span>
+                <h1>Ponle precio a tu conocimiento</h1>
+                <p>
+                    Encuentra estudiantes que dominan el curso, reserva una tutoría
+                    y avanza a tu ritmo. Sin complicaciones.
+                </p>
+                <div class="detalle-decorativo"></div>
+            </div>
+        </section>
+
+        <section class="login-form">
+            <form id="form-login" novalidate>
+                <div class="marca">
+                    <span class="marca-icono">UVG</span>
+                    <span>Tuto UVG</span>
+                </div>
+
+                <h2>Qué gusto verte</h2>
+                <p class="subtitulo">Ingresa con tu correo institucional.</p>
+
+                <div class="campo">
+                    <label for="correo">Correo institucional</label>
+                    <input id="correo" type="email" placeholder="Ej. josue.morales@uvg.edu.gt" required>
+                </div>
+
+                <div class="campo">
+                    <label for="contrasena">Contraseña</label>
+                    <input id="contrasena" type="password" placeholder="Mínimo 6 caracteres" required>
+                </div>
+
+                <span class="etiqueta-campo">Quiero ingresar como</span>
+                <div class="selector-rol">
+                    <label>
+                        <input type="radio" name="rol" value="estudiante" checked>
+                        Estudiante
+                    </label>
+                    <label>
+                        <input type="radio" name="rol" value="tutor">
+                        Tutor
+                    </label>
+                </div>
+
+                <div id="mensaje-login" class="margen-superior"></div>
+
+                <button class="boton ancho margen-superior" type="submit">Iniciar sesión</button>
+            </form>
+        </section>
+    </main>
+    <script src="js/login.js"></script>
+</body>
+</html>

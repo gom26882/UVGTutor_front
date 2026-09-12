@@ -3,54 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tuto UVG | Iniciar sesión</title>
+    <title>Tuto UVG | Buscar tutores</title>
     <link rel="stylesheet" href="css/estilos.css">
 </head>
 <body>
-    <main class="login">
-        <section class="login-arte">
-            <div class="login-contenido">
-                <span class="eyebrow">Comunidad UVG</span>
-                <h1>Ponle precio a tu conocimiento</h1>
-                <p>
-                    Encuentra estudiantes que dominan el curso, reserva una tutoría
-                    y avanza a tu ritmo. Sin complicaciones.
-                </p>
-                <div class="detalle-decorativo"></div>
+    <header class="encabezado">
+        <a class="marca" href="index.html">
+            <span class="marca-icono">UVG</span>
+            <span>Tuto UVG</span>
+        </a>
+
+        <nav class="navegacion">
+            <a href="index.html" class="activo">Explorar</a>
+            <a href="historial.html">Mis tutorías</a>
+            <a href="panel_tutor.html">Panel tutor</a>
+        </nav>
+
+        <div style="display:flex; align-items:center; gap:10px;">
+            <span id="usuario-chip" class="usuario-chip"></span>
+            <button id="btn-cerrar-sesion" class="boton secundario pequeno" type="button">Cerrar sesión</button>
+        </div>
+    </header>
+
+    <div class="contenedor">
+        <section class="hero hero-compacto">
+            <span class="eyebrow">Comunidad UVG</span>
+            <h1>Encuentra a tu tutor ideal</h1>
+            <p>
+                Busca por curso, filtra por modalidad y precio, y reserva
+                tu próxima tutoría en minutos.
+            </p>
+        </section>
+
+        <section class="seccion-busqueda">
+            <div class="barra-busqueda">
+                <input id="busqueda" type="text" placeholder="Busca por nombre de tutor o curso...">
+                <button id="btn-buscar" class="boton" type="button">Buscar</button>
+            </div>
+
+            <div class="contenido-busqueda">
+                <aside class="filtros panel">
+                    <div class="campo">
+                        <label for="curso">Curso</label>
+                        <select id="curso">
+                            <option value="">Todos los cursos</option>
+                        </select>
+                    </div>
+
+                    <div class="campo">
+                        <label for="modalidad">Modalidad</label>
+                        <select id="modalidad">
+                            <option value="">Todas</option>
+                            <option value="virtual">Virtual</option>
+                            <option value="presencial">Presencial</option>
+                        </select>
+                    </div>
+
+                    <div class="campo">
+                        <span class="etiqueta-campo">Precio máximo: <span id="precio-valor">Q200</span></span>
+                        <input id="precio" type="range" min="0" max="500" step="10" value="200">
+                    </div>
+
+                    <button id="btn-limpiar" class="boton secundario ancho" type="button">Limpiar filtros</button>
+                </aside>
+
+                <div>
+                    <p id="contador" class="subtitulo"></p>
+                    <div id="lista-tutores" class="resultados"></div>
+                </div>
             </div>
         </section>
+    </div>
 
-        <section class="login-form">
-            <form id="form-login">
-                <div class="marca">
-                    <span class="marca-icono">UVG</span>
-                    <span>Tuto UVG</span>
-                </div>
+    <footer class="pie">Tuto UVG · Proyecto académico</footer>
 
-                <h2>Qué gusto verte</h2>
-                <p class="subtitulo">Ingresa al prototipo con cualquier nombre.</p>
-
-                <div class="campo">
-                    <label for="nombre">Tu nombre</label>
-                    <input id="nombre" type="text" placeholder="Ej. Josué Morales" required>
-                </div>
-
-                <span class="etiqueta-campo">Quiero ingresar como</span>
-                <div class="selector-rol">
-                    <label>
-                        <input type="radio" name="rol" value="estudiante" checked>
-                        Estudiante
-                    </label>
-                    <label>
-                        <input type="radio" name="rol" value="tutor">
-                        Tutor
-                    </label>
-                </div>
-
-                <button class="boton ancho" type="submit">Continuar</button>
-            </form>
-        </section>
-    </main>
+    <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
