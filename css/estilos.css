@@ -780,4 +780,51 @@ th {
         align-items: flex-start;
         flex-direction: column;
     }
+
+    [hidden] {
+        display: none !important;
+    }
+
+    .pestanas-login {
+        display: flex;
+        gap: 6px;
+        margin: 24px 0 20px;
+        padding: 4px;
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.06);
+    }
+
+    .pestana-login {
+        flex: 1;
+        padding: 10px 12px;
+        border: 0;
+        border-radius: 9px;
+        background: transparent;
+        font: inherit;
+        font-weight: 600;
+        color: inherit;
+        cursor: pointer;
+        opacity: 0.7;
+    }
+
+    .pestana-login.activa {
+        background: #fff;
+        opacity: 1;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    }
+
+    .pestana-login:focus-visible {
+        outline: 2px solid currentColor;
+        outline-offset: 2px;
+    }
+
+    .mensaje-error {
+        color: #b3261e;
+        font-size: 0.9rem;
+    }
+
+    .mensaje-exito {
+        color: #1b7a3d;
+        font-size: 0.9rem;
+    }
 }

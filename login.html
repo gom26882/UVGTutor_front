@@ -21,41 +21,117 @@
         </section>
 
         <section class="login-form">
-            <form id="form-login" novalidate>
+            <div>
                 <div class="marca">
                     <span class="marca-icono">UVG</span>
                     <span>Tuto UVG</span>
                 </div>
 
-                <h2>Qué gusto verte</h2>
-                <p class="subtitulo">Ingresa con tu correo institucional.</p>
+                    <div class="selector-rol" role="tablist">
+                        <button
+                            id="tab-login"
+                            class="boton"
+                            type="button"
+                            role="tab"
+                            aria-selected="true"
+                            data-pestana
+                        >
+                            Iniciar sesión
+                        </button>
 
-                <div class="campo">
-                    <label for="correo">Correo institucional</label>
-                    <input id="correo" type="email" placeholder="Ej. josue.morales@uvg.edu.gt" required>
-                </div>
+                        <button
+                            id="tab-registro"
+                            class="boton secundario"
+                            type="button"
+                            role="tab"
+                            aria-selected="false"
+                            data-pestana
+                        >
+                            Crear cuenta
+                        </button>
+                    </div>
 
-                <div class="campo">
-                    <label for="contrasena">Contraseña</label>
-                    <input id="contrasena" type="password" placeholder="Mínimo 6 caracteres" required>
-                </div>
+                <form id="form-login" novalidate>
+                    <h2>Qué gusto verte</h2>
+                    <p class="subtitulo">Ingresa con tu correo institucional.</p>
 
-                <span class="etiqueta-campo">Quiero ingresar como</span>
-                <div class="selector-rol">
-                    <label>
-                        <input type="radio" name="rol" value="estudiante" checked>
-                        Estudiante
-                    </label>
-                    <label>
-                        <input type="radio" name="rol" value="tutor">
-                        Tutor
-                    </label>
-                </div>
+                    <div class="campo">
+                        <label for="correo">Correo institucional</label>
+                        <input id="correo" type="email" placeholder="Ej. josue.morales@uvg.edu.gt" autocomplete="username" required>
+                    </div>
 
-                <div id="mensaje-login" class="margen-superior"></div>
+                    <div class="campo">
+                        <label for="contrasena">Contraseña</label>
+                        <input id="contrasena" type="password" placeholder="Mínimo 6 caracteres" autocomplete="current-password" required>
+                    </div>
 
-                <button class="boton ancho margen-superior" type="submit">Iniciar sesión</button>
-            </form>
+                    <span class="etiqueta-campo">Quiero ingresar como</span>
+                    <div class="selector-rol">
+                        <label>
+                            <input type="radio" name="rol" value="estudiante" checked>
+                            Estudiante
+                        </label>
+                        <label>
+                            <input type="radio" name="rol" value="tutor">
+                            Tutor
+                        </label>
+                    </div>
+
+                    <div id="mensaje-login" class="margen-superior"></div>
+
+                    <button class="boton ancho margen-superior" type="submit">Iniciar sesión</button>
+                    <p class="subtitulo margen-superior">
+                        ¿Aún no tienes cuenta?
+                        <a href="#" id="ir-registro">Crea una aquí</a>
+                    </p>
+                </form>
+
+                <!-- REGISTRO -->
+                <form id="form-registro" novalidate hidden>
+                    <h2>Crea tu cuenta</h2>
+                    <p class="subtitulo">Solo toma un minuto. Usa tu correo institucional.</p>
+
+                    <div class="campo">
+                        <label for="registro-nombre">Nombre completo</label>
+                        <input id="registro-nombre" type="text" placeholder="Ej. Josué Morales" autocomplete="name" required>
+                    </div>
+
+                    <div class="campo">
+                        <label for="registro-correo">Correo institucional</label>
+                        <input id="registro-correo" type="email" placeholder="Ej. josue.morales@uvg.edu.gt" autocomplete="username" required>
+                    </div>
+
+                    <div class="campo">
+                        <label for="registro-contrasena">Contraseña</label>
+                        <input id="registro-contrasena" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" required>
+                    </div>
+
+                    <div class="campo">
+                        <label for="registro-confirmar">Confirmar contraseña</label>
+                        <input id="registro-confirmar" type="password" placeholder="Repite tu contraseña" autocomplete="new-password" required>
+                    </div>
+
+                    <span class="etiqueta-campo">Quiero registrarme como</span>
+                    <div class="selector-rol">
+                        <label>
+                            <input type="radio" name="rol-registro" value="estudiante" checked>
+                            Estudiante
+                        </label>
+                        <label>
+                            <input type="radio" name="rol-registro" value="tutor">
+                            Tutor
+                        </label>
+                    </div>
+
+                    <div id="mensaje-registro" class="margen-superior"></div>
+
+                    <button class="boton ancho margen-superior" type="submit">Crear cuenta</button>
+                    <p class="subtitulo margen-superior">
+                        ¿Ya tienes cuenta?
+                        <a href="#" id="ir-login">Inicia sesión</a>
+                    </p>
+                </form>
+            </div>
         </section>
     </main>
     <script src="js/login.js"></script>
