@@ -12,10 +12,7 @@
             <div class="login-contenido">
                 <span class="eyebrow">Comunidad UVG</span>
                 <h1>Ponle precio a tu conocimiento</h1>
-                <p>
-                    Encuentra estudiantes que dominan el curso, reserva una tutoría
-                    y avanza a tu ritmo. Sin complicaciones.
-                </p>
+                <p>Encuentra estudiantes que dominan el curso, reserva una tutoría y avanza a tu ritmo. Sin complicaciones.</p>
                 <div class="detalle-decorativo"></div>
             </div>
         </section>
@@ -27,29 +24,10 @@
                     <span>Tuto UVG</span>
                 </div>
 
-                    <div class="selector-rol" role="tablist">
-                        <button
-                            id="tab-login"
-                            class="boton"
-                            type="button"
-                            role="tab"
-                            aria-selected="true"
-                            data-pestana
-                        >
-                            Iniciar sesión
-                        </button>
-
-                        <button
-                            id="tab-registro"
-                            class="boton secundario"
-                            type="button"
-                            role="tab"
-                            aria-selected="false"
-                            data-pestana
-                        >
-                            Crear cuenta
-                        </button>
-                    </div>
+                <div class="selector-rol" role="tablist">
+                    <button id="tab-login" class="boton" type="button" role="tab" aria-selected="true">Iniciar sesión</button>
+                    <button id="tab-registro" class="boton secundario" type="button" role="tab" aria-selected="false">Crear cuenta</button>
+                </div>
 
                 <form id="form-login" novalidate>
                     <h2>Qué gusto verte</h2>
@@ -57,20 +35,26 @@
 
                     <div class="campo">
                         <label for="correo">Correo institucional</label>
-                        <input id="correo" type="email" placeholder="Ej. josue.morales@uvg.edu.gt" autocomplete="username" required>
+                        <input id="correo" type="email" placeholder="Ej. mor26588s@uvg.edu.gt" autocomplete="username" required>
                     </div>
 
                     <div class="campo">
                         <label for="contrasena">Contraseña</label>
-                        <input id="contrasena" type="password" placeholder="Mínimo 6 caracteres" autocomplete="current-password" required>
+
+                        <div class="contenedor-contrasena">
+                            <input id="contrasena" type="password" placeholder="Ingresa tu contraseña" autocomplete="current-password" required>
+                            <button class="boton secundario pequeno" type="button" data-mostrar-contrasena="contrasena">Mostrar</button>
+                        </div>
                     </div>
 
                     <span class="etiqueta-campo">Quiero ingresar como</span>
+
                     <div class="selector-rol">
                         <label>
                             <input type="radio" name="rol" value="estudiante" checked>
                             Estudiante
                         </label>
+
                         <label>
                             <input type="radio" name="rol" value="tutor">
                             Tutor
@@ -80,16 +64,16 @@
                     <div id="mensaje-login" class="margen-superior"></div>
 
                     <button class="boton ancho margen-superior" type="submit">Iniciar sesión</button>
+
                     <p class="subtitulo margen-superior">
                         ¿Aún no tienes cuenta?
                         <a href="#" id="ir-registro">Crea una aquí</a>
                     </p>
                 </form>
 
-                <!-- REGISTRO -->
                 <form id="form-registro" novalidate hidden>
                     <h2>Crea tu cuenta</h2>
-                    <p class="subtitulo">Solo toma un minuto. Usa tu correo institucional.</p>
+                    <p class="subtitulo">Usa tu correo institucional.</p>
 
                     <div class="campo">
                         <label for="registro-nombre">Nombre completo</label>
@@ -103,20 +87,40 @@
 
                     <div class="campo">
                         <label for="registro-contrasena">Contraseña</label>
-                        <input id="registro-contrasena" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" required>
+
+                        <div class="contenedor-contrasena">
+                            <input id="registro-contrasena" type="password" placeholder="Crea una contraseña segura" autocomplete="new-password" minlength="8" required>
+                            <button class="boton secundario pequeno" type="button" data-mostrar-contrasena="registro-contrasena">Mostrar</button>
+                        </div>
+
+                        <ul class="requisitos-contrasena">
+                            <li id="requisito-longitud">Mínimo 8 caracteres</li>
+                            <li id="requisito-mayuscula">Una letra mayúscula</li>
+                            <li id="requisito-minuscula">Una letra minúscula</li>
+                            <li id="requisito-numero">Un número</li>
+                            <li id="requisito-especial">Un carácter especial</li>
+                        </ul>
                     </div>
 
                     <div class="campo">
                         <label for="registro-confirmar">Confirmar contraseña</label>
-                        <input id="registro-confirmar" type="password" placeholder="Repite tu contraseña" autocomplete="new-password" required>
+
+                        <div class="contenedor-contrasena">
+                            <input id="registro-confirmar" type="password" placeholder="Repite tu contraseña" autocomplete="new-password" minlength="8" required>
+                            <button class="boton secundario pequeno" type="button" data-mostrar-contrasena="registro-confirmar">Mostrar</button>
+                        </div>
+
+                        <small id="estado-confirmacion" class="estado-confirmacion"></small>
                     </div>
 
                     <span class="etiqueta-campo">Quiero registrarme como</span>
+
                     <div class="selector-rol">
                         <label>
                             <input type="radio" name="rol-registro" value="estudiante" checked>
                             Estudiante
                         </label>
+
                         <label>
                             <input type="radio" name="rol-registro" value="tutor">
                             Tutor
@@ -126,6 +130,7 @@
                     <div id="mensaje-registro" class="margen-superior"></div>
 
                     <button class="boton ancho margen-superior" type="submit">Crear cuenta</button>
+
                     <p class="subtitulo margen-superior">
                         ¿Ya tienes cuenta?
                         <a href="#" id="ir-login">Inicia sesión</a>
@@ -134,6 +139,7 @@
             </div>
         </section>
     </main>
+
     <script src="js/login.js"></script>
 </body>
 </html>
