@@ -102,7 +102,8 @@
 
         if (rol === "tutor") {
             ocultarElementos('a[href="historial.html"]');
-            ocultarElementos('a[href="reservar_tutorias.html"]');
+            ocultarElementos('a[href^="reservar_tutorias.html"]');
+            ocultarElementos("#reservar");
         }
     }
 

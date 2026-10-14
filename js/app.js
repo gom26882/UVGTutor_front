@@ -44,6 +44,14 @@ function guardarReservas(reservas) {
     localStorage.setItem("tutouvg_reservas", JSON.stringify(reservas));
 }
 
+function obtenerUsuarioActual() {
+    try {
+        return JSON.parse(localStorage.getItem("usuario"));
+    } catch (error) {
+        return null;
+    }
+}
+
 function marcarEnlaceActivo() {
     const paginaActual = location.pathname.split("/").pop() || "index.html";
     const enlaces = document.querySelectorAll(".navegacion a");
@@ -61,30 +69,6 @@ function marcarEnlaceActivo() {
     if (chipUsuario && usuario) {
         chipUsuario.textContent = usuario.nombre;
     }
-}
-
-function iniciarLogin() {
-    const formulario = seleccionar("#form-login");
-
-    if (!formulario) {
-        return;
-    }
-
-    formulario.addEventListener("submit", (evento) => {
-        evento.preventDefault();
-
-        const nombre = seleccionar("#nombre").value.trim();
-        const rol = seleccionar("input[name='rol']:checked").value;
-        const usuario = { nombre, rol };
-
-        localStorage.setItem("usuario", JSON.stringify(usuario));
-
-        if (rol === "tutor") {
-            location.href = "panel_tutor.html";
-        } else {
-            location.href = "buscar_tutores.html";
-        }
-    });
 }
 
 function crearTarjetaTutor(tutor) {
@@ -231,6 +215,7 @@ function iniciarReserva() {
     }
 
     const tutor = obtenerTutorActual();
+    const usuario = obtenerUsuarioActual();
     const hoy = new Date();
 
     seleccionar("#reserva-tutor").textContent = tutor.nombre;
@@ -247,13 +232,23 @@ function iniciarReserva() {
     formulario.addEventListener("submit", (evento) => {
         evento.preventDefault();
 
+        const fecha = seleccionar("#fecha").value;
+        const hora = seleccionar("#hora").value;
+
+        if (new Date(`${fecha}T${hora}`) <= new Date()) {
+            alert("Elige una fecha y hora futura.");
+            return;
+        }
+
         const nuevaReserva = {
             id: Date.now(),
             tutor: tutor.nombre,
+            estudiante: usuario ? usuario.nombre : "Estudiante UVG",
+            estudianteCorreo: usuario ? usuario.correo : "",
             curso: seleccionar("#curso").value,
             modalidad: seleccionar("#modalidad").value,
-            fecha: seleccionar("#fecha").value,
-            hora: seleccionar("#hora").value,
+            fecha: fecha,
+            hora: hora,
             detalles: seleccionar("#detalles").value.trim(),
             precio: tutor.precio,
             estado: "Pendiente"
@@ -287,7 +282,10 @@ function iniciarHistorial() {
         return;
     }
 
-    const reservas = obtenerReservas();
+    const usuario = obtenerUsuarioActual();
+    const reservas = obtenerReservas().filter((reserva) => {
+        return usuario && reserva.estudianteCorreo === usuario.correo;
+    });
 
     if (reservas.length > 0) {
         cuerpoTabla.innerHTML = reservas.map(crearFilaHistorial).join("");
@@ -366,7 +364,14 @@ function iniciarPanel() {
         return;
     }
 
+    const usuario = obtenerUsuarioActual();
     let solicitudes = obtenerReservas();
+
+    if (usuario) {
+        solicitudes = solicitudes.filter((reserva) => {
+            return reserva.tutor === usuario.nombre;
+        });
+    }
 
     if (solicitudes.length === 0) {
         solicitudes = obtenerSolicitudesDeEjemplo();
@@ -419,7 +424,6 @@ function iniciarPanel() {
 
 document.addEventListener("DOMContentLoaded", () => {
     marcarEnlaceActivo();
-    iniciarLogin();
     iniciarBusqueda();
     iniciarPerfil();
     iniciarReserva();
