@@ -48,13 +48,13 @@ function marcarEnlaceActivo() {
     const paginaActual = location.pathname.split("/").pop() || "index.html";
     const enlaces = document.querySelectorAll(".navegacion a");
 
-    enlaces.forEach((enlace) => {
+    enlaces.forEach(function (enlace) {
         if (enlace.getAttribute("href") === paginaActual) {
             enlace.classList.add("activo");
         }
     });
 
-    const usuarioGuardado = localStorage.getItem("tutouvg_usuario") || "null";
+    const usuarioGuardado = localStorage.getItem("usuario") || "null";
     const usuario = JSON.parse(usuarioGuardado);
     const chipUsuario = seleccionar("#usuario-chip");
 
@@ -77,7 +77,7 @@ function iniciarLogin() {
         const rol = seleccionar("input[name='rol']:checked").value;
         const usuario = { nombre, rol };
 
-        localStorage.setItem("tutouvg_usuario", JSON.stringify(usuario));
+        localStorage.setItem("usuario", JSON.stringify(usuario));
 
         if (rol === "tutor") {
             location.href = "panel_tutor.html";
