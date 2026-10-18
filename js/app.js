@@ -524,44 +524,312 @@ function iniciarReserva() {
 }
 
 function crearFilaHistorial(reserva) {
+    const esCancelable = puedeCancelarReserva(
+        reserva
+    );
+
+    const accion = esCancelable
+        ? `<button class="boton peligro pequeno" data-cancelar-reserva="${reserva.id}">Cancelar tutoría</button>`
+        : "Sin acciones";
+
     return `
         <tr>
             <td>${reserva.tutor}</td>
             <td>${reserva.curso}</td>
-            <td>${reserva.fecha}<br><small>${reserva.hora}</small></td>
+            <td>
+                ${reserva.fecha}
+                <br>
+                <small>${reserva.hora}</small>
+            </td>
             <td>${reserva.modalidad}</td>
             <td>
                 <span class="estado ${reserva.estado.toLowerCase()}">
                     ${reserva.estado}
                 </span>
             </td>
+            <td>${accion}</td>
         </tr>
     `;
 }
 
+function puedeCancelarReserva(reserva) {
+    const estadosCancelables = [
+        "Pendiente",
+        "Confirmada"
+    ];
+
+    const fechaTutoria = new Date(
+        `${reserva.fecha}T${reserva.hora}`
+    );
+
+    return (
+        estadosCancelables.includes(
+            reserva.estado
+        )
+        && fechaTutoria > new Date()
+    );
+}
+
 function iniciarHistorial() {
-    const cuerpoTabla = seleccionar("#tabla-historial");
+    const cuerpoTabla = seleccionar(
+        "#tabla-historial"
+    );
 
     if (!cuerpoTabla) {
         return;
     }
 
     const usuario = obtenerUsuarioActual();
-    const reservas = obtenerReservas().filter((reserva) => {
-        return usuario && reserva.estudianteCorreo === usuario.correo;
-    });
 
-    if (reservas.length > 0) {
-        cuerpoTabla.innerHTML = reservas.map(crearFilaHistorial).join("");
-    } else {
-        cuerpoTabla.innerHTML = `
-            <tr>
-                <td colspan="5">
-                    <div class="vacio">Aún no has reservado tutorías.</div>
-                </td>
-            </tr>
-        `;
+    const modal = seleccionar(
+        "#modal-cancelacion"
+    );
+
+    const formularioCancelacion = seleccionar(
+        "#form-cancelacion"
+    );
+
+    const motivoCancelacion = seleccionar(
+        "#motivo-cancelacion"
+    );
+
+    const mensajeCancelacion = seleccionar(
+        "#mensaje-cancelacion"
+    );
+
+    const resumenCancelacion = seleccionar(
+        "#resumen-cancelacion"
+    );
+
+    const mensajeError = seleccionar(
+        "#mensaje-error-cancelacion"
+    );
+
+    let idReservaSeleccionada = null;
+
+    function obtenerReservasDelUsuario() {
+        return obtenerReservas().filter(
+            function (reserva) {
+                return (
+                    usuario
+                    && reserva.estudianteCorreo
+                        === usuario.correo
+                );
+            }
+        );
     }
+
+    function mostrarHistorial() {
+        const reservas =
+            obtenerReservasDelUsuario();
+
+        if (reservas.length > 0) {
+            cuerpoTabla.innerHTML = reservas
+                .map(crearFilaHistorial)
+                .join("");
+        } else {
+            cuerpoTabla.innerHTML = `
+                <tr>
+                    <td colspan="6">
+                        <div class="vacio">
+                            Aún no has reservado tutorías.
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    function abrirModalCancelacion(reserva) {
+        idReservaSeleccionada = reserva.id;
+
+        motivoCancelacion.value = "";
+
+        mensajeCancelacion.value =
+            "Hola "
+            + reserva.tutor
+            + ", lamento tener que cancelar nuestra tutoría. "
+            + "Espero que podamos coordinar otra oportunidad.";
+
+        mensajeError.textContent = "";
+
+        resumenCancelacion.innerHTML = `
+            <strong>${reserva.curso}</strong>
+            <span>
+                ${reserva.fecha} a las
+                ${reserva.hora} con
+                ${reserva.tutor}
+            </span>
+        `;
+
+        modal.hidden = false;
+
+        document.body.classList.add(
+            "sin-scroll"
+        );
+
+        motivoCancelacion.focus();
+    }
+
+    function cerrarModalCancelacion() {
+        modal.hidden = true;
+
+        document.body.classList.remove(
+            "sin-scroll"
+        );
+
+        formularioCancelacion.reset();
+
+        mensajeError.textContent = "";
+
+        idReservaSeleccionada = null;
+    }
+
+    cuerpoTabla.addEventListener(
+        "click",
+        function (evento) {
+            const botonCancelar =
+                evento.target.closest(
+                    "[data-cancelar-reserva]"
+                );
+
+            if (!botonCancelar) {
+                return;
+            }
+
+            const idReserva = Number(
+                botonCancelar.dataset
+                    .cancelarReserva
+            );
+
+            const reserva = obtenerReservas()
+                .find(
+                    function (elemento) {
+                        return (
+                            elemento.id
+                            === idReserva
+                        );
+                    }
+                );
+
+            if (
+                reserva
+                && puedeCancelarReserva(reserva)
+            ) {
+                abrirModalCancelacion(reserva);
+            }
+        }
+    );
+
+    formularioCancelacion.addEventListener(
+        "submit",
+        function (evento) {
+            evento.preventDefault();
+
+            const motivo =
+                motivoCancelacion.value;
+
+            const mensaje =
+                mensajeCancelacion.value.trim();
+
+            if (!motivo) {
+                mensajeError.textContent =
+                    "Selecciona una razón para cancelar.";
+
+                motivoCancelacion.focus();
+
+                return;
+            }
+
+            if (mensaje.length < 10) {
+                mensajeError.textContent =
+                    "Escribe un mensaje de disculpa de al menos 10 caracteres.";
+
+                mensajeCancelacion.focus();
+
+                return;
+            }
+
+            const todasLasReservas =
+                obtenerReservas();
+
+            const reserva =
+                todasLasReservas.find(
+                    function (elemento) {
+                        return (
+                            elemento.id
+                            === idReservaSeleccionada
+                        );
+                    }
+                );
+
+            if (
+                !reserva
+                || !puedeCancelarReserva(reserva)
+            ) {
+                mensajeError.textContent =
+                    "Esta tutoría ya no se puede cancelar.";
+
+                return;
+            }
+
+            reserva.estado = "Cancelada";
+
+            reserva.motivoCancelacion =
+                motivo;
+
+            reserva.mensajeCancelacion =
+                mensaje;
+
+            reserva.fechaCancelacion =
+                new Date().toISOString();
+
+            guardarReservas(
+                todasLasReservas
+            );
+
+            cerrarModalCancelacion();
+
+            mostrarHistorial();
+        }
+    );
+
+    seleccionar(
+        "#cerrar-cancelacion"
+    ).addEventListener(
+        "click",
+        cerrarModalCancelacion
+    );
+
+    seleccionar(
+        "#conservar-tutoria"
+    ).addEventListener(
+        "click",
+        cerrarModalCancelacion
+    );
+
+    modal.addEventListener(
+        "click",
+        function (evento) {
+            if (evento.target === modal) {
+                cerrarModalCancelacion();
+            }
+        }
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (evento) {
+            if (
+                evento.key === "Escape"
+                && !modal.hidden
+            ) {
+                cerrarModalCancelacion();
+            }
+        }
+    );
+
+    mostrarHistorial();
 }
 
 function obtenerSolicitudesDeEjemplo() {
@@ -590,6 +858,14 @@ function obtenerSolicitudesDeEjemplo() {
 }
 
 function crearAccionesSolicitud(reserva) {
+    if (reserva.estado === "Cancelada") {
+        return `
+            <button class="boton secundario pequeno" data-id="${reserva.id}" data-ver-cancelacion>
+                Ver cancelación
+            </button>
+        `;
+    }
+
     if (reserva.estado !== "Pendiente") {
         return "Sin acciones";
     }
@@ -598,6 +874,7 @@ function crearAccionesSolicitud(reserva) {
         <button class="boton pequeno" data-id="${reserva.id}" data-accion="Confirmada">
             Aceptar
         </button>
+
         <button class="boton peligro pequeno" data-id="${reserva.id}" data-accion="Rechazada">
             Rechazar
         </button>
@@ -656,34 +933,93 @@ function iniciarPanel() {
         seleccionar("#confirmadas").textContent = confirmadas;
     }
 
-    cuerpoTabla.addEventListener("click", (evento) => {
-        const boton = evento.target.closest("button[data-id]");
+    cuerpoTabla.addEventListener(
+    "click",
+    function (evento) {
+        const botonVerCancelacion =
+            evento.target.closest(
+                "button[data-ver-cancelacion]"
+            );
+
+        if (botonVerCancelacion) {
+            const idCancelacion = Number(
+                botonVerCancelacion.dataset.id
+            );
+
+            const reservaCancelada =
+                solicitudes.find(
+                    function (elemento) {
+                        return (
+                            elemento.id
+                            === idCancelacion
+                        );
+                    }
+                );
+
+            if (reservaCancelada) {
+                alert(
+                    "Razón: "
+                    + reservaCancelada
+                        .motivoCancelacion
+                    + "\n\nMensaje del estudiante:\n"
+                    + reservaCancelada
+                        .mensajeCancelacion
+                );
+            }
+
+            return;
+        }
+
+        const boton = evento.target.closest(
+            "button[data-id]"
+        );
 
         if (!boton) {
             return;
         }
 
-        const idSolicitud = Number(boton.dataset.id);
-        const solicitud = solicitudes.find((elemento) => elemento.id === idSolicitud);
+        const idSolicitud = Number(
+            boton.dataset.id
+        );
+
+        const solicitud = solicitudes.find(
+            function (elemento) {
+                return (
+                    elemento.id === idSolicitud
+                );
+            }
+        );
 
         if (solicitud) {
-            solicitud.estado = boton.dataset.accion;
+            solicitud.estado =
+                boton.dataset.accion;
         }
 
-        const reservasGuardadas = obtenerReservas();
-        const reservaOriginal = reservasGuardadas.find((elemento) => {
-            return elemento.id === idSolicitud;
-        });
+        const reservasGuardadas =
+            obtenerReservas();
+
+        const reservaOriginal =
+            reservasGuardadas.find(
+                function (elemento) {
+                    return (
+                        elemento.id
+                        === idSolicitud
+                    );
+                }
+            );
 
         if (reservaOriginal) {
-            reservaOriginal.estado = boton.dataset.accion;
-            guardarReservas(reservasGuardadas);
+            reservaOriginal.estado =
+                boton.dataset.accion;
+
+            guardarReservas(
+                reservasGuardadas
+            );
         }
 
         mostrarSolicitudes();
-    });
-
-    mostrarSolicitudes();
+    }
+);
 }
 
 document.addEventListener("DOMContentLoaded", () => {

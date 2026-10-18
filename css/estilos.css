@@ -575,6 +575,70 @@ th {
     background: #381919;
 }
 
+.estado.cancelada {
+    color: #ffb0b0;
+    background: #3d1b1b;
+}
+
+.sin-scroll {
+    overflow: hidden;
+}
+
+.modal-cancelacion {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.78);
+    backdrop-filter: blur(8px);
+}
+
+.modal-cancelacion[hidden] {
+    display: none;
+}
+
+.modal-contenido {
+    position: relative;
+    width: min(540px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-cerrar {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--borde);
+    border-radius: 50%;
+    color: var(--texto-secundario);
+    background: var(--superficie-clara);
+    font-weight: 900;
+}
+
+.modal-cerrar:hover {
+    color: var(--verde);
+    border-color: var(--verde-oscuro);
+}
+
+.resumen-cancelacion {
+    display: grid;
+    gap: 5px;
+    padding: 14px;
+    margin: 18px 0;
+    border-left: 4px solid var(--verde);
+    border-radius: 0 10px 10px 0;
+    color: var(--texto-secundario);
+    background: var(--negro-suave);
+}
+
+.resumen-cancelacion strong {
+    color: var(--texto);
+}
+
 .login {
     display: grid;
     min-height: 100vh;

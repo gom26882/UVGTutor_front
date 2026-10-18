@@ -12,11 +12,13 @@
             <span class="marca-icono">UVG</span>
             <span>Tuto UVG</span>
         </a>
+
         <nav class="navegacion">
             <a href="buscar_tutores.html">Explorar</a>
             <a href="historial.html">Mis tutorías</a>
             <a href="panel_tutor.html">Panel tutor</a>
         </nav>
+
         <span class="usuario-chip" id="usuario-chip">Estudiante UVG</span>
     </header>
 
@@ -27,6 +29,7 @@
                 <h1>Mis tutorías</h1>
                 <p class="subtitulo">Consulta tus solicitudes y sesiones.</p>
             </div>
+
             <a class="boton" href="buscar_tutores.html">Buscar tutores</a>
         </div>
 
@@ -39,12 +42,62 @@
                         <th>Fecha</th>
                         <th>Modalidad</th>
                         <th>Estado</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
+
                 <tbody id="tabla-historial"></tbody>
             </table>
         </section>
+
+        <div class="modal-cancelacion" id="modal-cancelacion" hidden>
+            <section class="panel modal-contenido" role="dialog" aria-modal="true" aria-labelledby="titulo-cancelacion">
+                <button class="modal-cerrar" id="cerrar-cancelacion" type="button" aria-label="Cerrar">X</button>
+
+                <span class="eyebrow">Cancelar tutoría</span>
+                <h2 id="titulo-cancelacion">Cuéntanos qué ocurrió</h2>
+
+                <p class="subtitulo">
+                    La tutoría permanecerá en tu historial y el tutor podrá conocer el motivo.
+                </p>
+
+                <div class="resumen-cancelacion" id="resumen-cancelacion"></div>
+
+                <form id="form-cancelacion">
+                    <div class="campo">
+                        <label for="motivo-cancelacion">Razón de la cancelación</label>
+
+                        <select id="motivo-cancelacion" required>
+                            <option value="">Selecciona una razón</option>
+                            <option value="Conflicto de horario">Tengo un conflicto de horario</option>
+                            <option value="Ya no necesito la tutoría">Ya no necesito la tutoría</option>
+                            <option value="Problema personal">Tuve un problema personal</option>
+                            <option value="Error en la reserva">Cometí un error al reservar</option>
+                            <option value="Otro motivo">Otro motivo</option>
+                        </select>
+                    </div>
+
+                    <div class="campo">
+                        <label for="mensaje-cancelacion">Mensaje de disculpa para el tutor</label>
+
+                        <textarea id="mensaje-cancelacion" minlength="10" maxlength="300" placeholder="Escribe un mensaje breve y respetuoso" required></textarea>
+
+                        <small class="subtitulo">
+                            Entre 10 y 300 caracteres.
+                        </small>
+                    </div>
+
+                    <div id="mensaje-error-cancelacion" class="mensaje-error"></div>
+
+                    <div class="acciones">
+                        <button class="boton peligro" type="submit">Confirmar cancelación</button>
+                        <button class="boton secundario" id="conservar-tutoria" type="button">Conservar tutoría</button>
+                    </div>
+                </form>
+            </section>
+        </div>
     </main>
+
     <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
 </body>
