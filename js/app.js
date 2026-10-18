@@ -177,34 +177,189 @@ function obtenerTutorActual() {
     return tutor;
 }
 
+function obtenerLimitesDelAnioActual() {
+    const hoy = new Date();
+
+    hoy.setMinutes(
+        hoy.getMinutes() - hoy.getTimezoneOffset()
+    );
+
+    const fechaMinima = hoy
+        .toISOString()
+        .split("T")[0];
+
+    const anioActual = hoy.getFullYear();
+    const fechaMaxima = `${anioActual}-12-31`;
+
+    return {
+        fechaMinima: fechaMinima,
+        fechaMaxima: fechaMaxima
+    };
+}
+
+function configurarLimitesDeFecha(inputFecha) {
+    const limites = obtenerLimitesDelAnioActual();
+
+    inputFecha.min = limites.fechaMinima;
+    inputFecha.max = limites.fechaMaxima;
+
+    if (
+        inputFecha.value
+        && (
+            inputFecha.value < limites.fechaMinima
+            || inputFecha.value > limites.fechaMaxima
+        )
+    ) {
+        inputFecha.value = "";
+    }
+
+    return limites;
+}
+
+function configurarEnterParaAvanzar(formulario) {
+    formulario.addEventListener(
+        "keydown",
+        function (evento) {
+            if (evento.key !== "Enter") {
+                return;
+            }
+
+            evento.preventDefault();
+
+            if (
+                evento.target.matches(
+                    'button[type="submit"]'
+                )
+            ) {
+                return;
+            }
+
+            const campos = Array.from(
+                formulario.querySelectorAll(
+                    'input:not([type="hidden"]), select, textarea, button[type="submit"]'
+                )
+            ).filter(
+                function (campo) {
+                    return (
+                        !campo.disabled
+                        && campo.offsetParent !== null
+                    );
+                }
+            );
+
+            const posicionActual = campos.indexOf(
+                evento.target
+            );
+
+            const siguienteCampo = campos[
+                posicionActual + 1
+            ];
+
+            if (siguienteCampo) {
+                siguienteCampo.focus();
+            }
+        }
+    );
+}
+
 function iniciarPerfil() {
-    if (!seleccionar("#nombre-tutor")) {
+     if (!seleccionar("#nombre-tutor")) {
         return;
     }
 
     const tutor = obtenerTutorActual();
     const avatar = seleccionar("#avatar-tutor");
+    const inputFechaPerfil = seleccionar(
+        "#fecha-perfil"
+    );
 
-    seleccionar("#nombre-tutor").textContent = tutor.nombre;
+    const limites = configurarLimitesDeFecha(
+        inputFechaPerfil
+    );
+
+    const fechaGuardada = localStorage.getItem(
+        "tutouvg_fecha"
+    ) || "";
+
+    if (
+        fechaGuardada >= limites.fechaMinima
+        && fechaGuardada <= limites.fechaMaxima
+    ) {
+        inputFechaPerfil.value = fechaGuardada;
+    } else {
+        localStorage.removeItem("tutouvg_fecha");
+    }
+
+    seleccionar("#nombre-tutor").textContent =
+        tutor.nombre;
+
     avatar.textContent = tutor.iniciales;
-    avatar.classList.toggle("alternativo", tutor.color === "alternativo");
-    seleccionar("#cursos-tutor").textContent = tutor.cursos.join(" | ");
-    seleccionar("#modalidad-tutor").textContent = tutor.modalidad.join(" / ");
-    seleccionar("#precio-tutor").textContent = `Q${tutor.precio} por hora`;
-    seleccionar("#rating-tutor").textContent = `${tutor.rating} de 5`;
 
-    document.querySelectorAll(".hora").forEach((boton) => {
-        boton.addEventListener("click", () => {
-            document.querySelectorAll(".hora").forEach((otraHora) => {
-                otraHora.classList.remove("seleccionada");
-            });
+    avatar.classList.toggle(
+        "alternativo",
+        tutor.color === "alternativo"
+    );
 
-            boton.classList.add("seleccionada");
-            localStorage.setItem("tutouvg_hora", boton.dataset.hora);
-        });
-    });
+    seleccionar("#cursos-tutor").textContent =
+        tutor.cursos.join(" | ");
 
-    seleccionar("#reservar").href = `reservar_tutorias.html?id=${tutor.id}`;
+    seleccionar("#modalidad-tutor").textContent =
+        tutor.modalidad.join(" / ");
+
+    seleccionar("#precio-tutor").textContent =
+        `Q${tutor.precio} por hora`;
+
+    seleccionar("#rating-tutor").textContent =
+        `${tutor.rating} de 5`;
+
+    inputFechaPerfil.addEventListener(
+        "change",
+        function () {
+            if (inputFechaPerfil.value) {
+                localStorage.setItem(
+                    "tutouvg_fecha",
+                    inputFechaPerfil.value
+                );
+            } else {
+                localStorage.removeItem(
+                    "tutouvg_fecha"
+                );
+            }
+        }
+    );
+
+    document
+        .querySelectorAll(".hora")
+        .forEach(
+            function (boton) {
+                boton.addEventListener(
+                    "click",
+                    function () {
+                        document
+                            .querySelectorAll(".hora")
+                            .forEach(
+                                function (otraHora) {
+                                    otraHora.classList.remove(
+                                        "seleccionada"
+                                    );
+                                }
+                            );
+
+                        boton.classList.add(
+                            "seleccionada"
+                        );
+
+                        localStorage.setItem(
+                            "tutouvg_hora",
+                            boton.dataset.hora
+                        );
+                    }
+                );
+            }
+        );
+
+    seleccionar("#reservar").href =
+        `reservar_tutorias.html?id=${tutor.id}`;
 }
 
 function iniciarReserva() {
@@ -216,47 +371,156 @@ function iniciarReserva() {
 
     const tutor = obtenerTutorActual();
     const usuario = obtenerUsuarioActual();
-    const hoy = new Date();
 
-    seleccionar("#reserva-tutor").textContent = tutor.nombre;
-    seleccionar("#resumen-tutor").textContent = tutor.nombre;
-    seleccionar("#resumen-precio").textContent = `Q${tutor.precio}`;
+    const inputFecha = seleccionar("#fecha");
+
+    const botonConfirmar = formulario.querySelector(
+        'button[type="submit"]'
+    );
+
+    const limites = configurarLimitesDeFecha(
+        inputFecha
+    );
+
+    const fechaGuardada = localStorage.getItem(
+        "tutouvg_fecha"
+    ) || "";
+
+    let confirmacionSolicitada = false;
+
+    seleccionar("#reserva-tutor").textContent =
+        tutor.nombre;
+
+    seleccionar("#resumen-tutor").textContent =
+        tutor.nombre;
+
+    seleccionar("#resumen-precio").textContent =
+        `Q${tutor.precio}`;
+
     seleccionar("#curso").innerHTML = tutor.cursos
-        .map((curso) => `<option>${curso}</option>`)
+        .map(
+            function (curso) {
+                return `<option>${curso}</option>`;
+            }
+        )
         .join("");
 
-    hoy.setMinutes(hoy.getMinutes() - hoy.getTimezoneOffset());
-    seleccionar("#fecha").min = hoy.toISOString().split("T")[0];
-    seleccionar("#hora").value = localStorage.getItem("tutouvg_hora") || "14:00";
+    if (
+        fechaGuardada >= limites.fechaMinima
+        && fechaGuardada <= limites.fechaMaxima
+    ) {
+        inputFecha.value = fechaGuardada;
+    } else {
+        localStorage.removeItem("tutouvg_fecha");
+    }
 
-    formulario.addEventListener("submit", (evento) => {
-        evento.preventDefault();
+    seleccionar("#hora").value =
+        localStorage.getItem("tutouvg_hora")
+        || "14:00";
 
-        const fecha = seleccionar("#fecha").value;
-        const hora = seleccionar("#hora").value;
-
-        if (new Date(`${fecha}T${hora}`) <= new Date()) {
-            alert("Elige una fecha y hora futura.");
-            return;
+    inputFecha.addEventListener(
+        "change",
+        function () {
+            if (inputFecha.value) {
+                localStorage.setItem(
+                    "tutouvg_fecha",
+                    inputFecha.value
+                );
+            }
         }
+    );
 
-        const nuevaReserva = {
-            id: Date.now(),
-            tutor: tutor.nombre,
-            estudiante: usuario ? usuario.nombre : "Estudiante UVG",
-            estudianteCorreo: usuario ? usuario.correo : "",
-            curso: seleccionar("#curso").value,
-            modalidad: seleccionar("#modalidad").value,
-            fecha: fecha,
-            hora: hora,
-            detalles: seleccionar("#detalles").value.trim(),
-            precio: tutor.precio,
-            estado: "Pendiente"
-        };
+    configurarEnterParaAvanzar(formulario);
 
-        guardarReservas([nuevaReserva, ...obtenerReservas()]);
-        location.href = "confirmacion.html";
-    });
+    botonConfirmar.addEventListener(
+        "click",
+        function () {
+            confirmacionSolicitada = true;
+        }
+    );
+
+    formulario.addEventListener(
+        "submit",
+        function (evento) {
+            evento.preventDefault();
+
+            if (!confirmacionSolicitada) {
+                return;
+            }
+
+            confirmacionSolicitada = false;
+
+            const fecha = inputFecha.value;
+            const hora = seleccionar("#hora").value;
+
+            if (
+                fecha < limites.fechaMinima
+                || fecha > limites.fechaMaxima
+            ) {
+                alert(
+                    "Selecciona una fecha válida dentro del año actual."
+                );
+
+                inputFecha.focus();
+                return;
+            }
+
+            const fechaYHoraSeleccionada = new Date(
+                `${fecha}T${hora}`
+            );
+
+            if (
+                fechaYHoraSeleccionada <= new Date()
+            ) {
+                alert(
+                    "Elige una fecha y hora futura."
+                );
+
+                seleccionar("#hora").focus();
+                return;
+            }
+
+            const nuevaReserva = {
+                id: Date.now(),
+                tutor: tutor.nombre,
+                estudiante: usuario
+                    ? usuario.nombre
+                    : "Estudiante UVG",
+                estudianteCorreo: usuario
+                    ? usuario.correo
+                    : "",
+                curso: seleccionar("#curso").value,
+                modalidad: seleccionar(
+                    "#modalidad"
+                ).value,
+                fecha: fecha,
+                hora: hora,
+                detalles: seleccionar(
+                    "#detalles"
+                ).value.trim(),
+                precio: tutor.precio,
+                estado: "Pendiente"
+            };
+
+            const reservasActuales =
+                obtenerReservas();
+
+            guardarReservas([
+                nuevaReserva,
+                ...reservasActuales
+            ]);
+
+            localStorage.removeItem(
+                "tutouvg_fecha"
+            );
+
+            localStorage.removeItem(
+                "tutouvg_hora"
+            );
+
+            location.href = "confirmacion.html";
+        }
+    );
 }
 
 function crearFilaHistorial(reserva) {
