@@ -3,83 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tuto UVG | Perfil del tutor</title>
+    <title>Tuto UVG | Panel del tutor</title>
     <link rel="stylesheet" href="css/estilos.css">
 </head>
 <body>
     <header class="encabezado">
-        <a class="marca" href="buscar_tutores.html">
+        <a class="marca" href="panel_tutor.html">
             <span class="marca-icono">UVG</span>
             <span>Tuto UVG</span>
         </a>
         <nav class="navegacion">
-            <a href="buscar_tutores.html">Explorar</a>
-            <a href="historial.html">Mis tutorías</a>
-            <a href="panel_tutor.html">Panel tutor</a>
+            <a href="panel_tutor.html">Panel</a>
+            <a href="perfil_tutor.html">Mi perfil</a>
+            <a href="buscar_tutores.html">Vista estudiante</a>
         </nav>
-        <span class="usuario-chip" id="usuario-chip">Estudiante UVG</span>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <span class="usuario-chip" id="usuario-chip">Tutor UVG</span>
+            <button id="btn-cerrar-sesion" class="boton secundario pequeno" type="button">Cerrar sesión</button>
+        </div>
     </header>
 
     <main class="contenedor">
         <div class="titulo-pagina">
             <div>
-                <span class="eyebrow">Conoce a tu tutor</span>
-                <h1>Perfil del tutor</h1>
+                <span class="eyebrow">Panel de gestión</span>
+                <h1>Hola, tutor</h1>
+                <p class="subtitulo">Organiza las solicitudes de tu comunidad.</p>
             </div>
-            <a class="boton secundario" href="buscar_tutores.html">Volver</a>
         </div>
 
-        <section class="perfil-grid">
-            <aside class="panel perfil-resumen">
-                <div class="avatar grande" id="avatar-tutor">JP</div>
-                <h2 id="nombre-tutor">Juan Pérez</h2>
-                <p class="calificacion" id="rating-tutor">4.9 de 5</p>
-                <ul class="lista-limpia">
-                    <li><strong>Cursos</strong><br><span class="subtitulo" id="cursos-tutor"></span></li>
-                    <li><strong>Modalidad</strong><br><span class="subtitulo" id="modalidad-tutor"></span></li>
-                    <li><strong>Precio</strong><br><span class="subtitulo" id="precio-tutor"></span></li>
-                </ul>
-            </aside>
-
-            <article class="panel">
-                <h2>Sobre mí</h2>
-                <p class="subtitulo">
-                    Me gusta explicar los temas con ejemplos sencillos y ejercicios
-                    progresivos. La meta no es memorizar: es comprender por qué funciona.
-                </p>
-                <h3>Lo que trabajaremos</h3>
-                <div class="etiquetas">
-                    <span class="etiqueta">Repaso de teoría</span>
-                    <span class="etiqueta">Ejercicios guiados</span>
-                    <span class="etiqueta">Preparación de parciales</span>
-                </div>
-                <div class="bloque-metodo">
-                    <span class="eyebrow">Método de trabajo</span>
-                    <h3>Comprender, practicar y aplicar.</h3>
-                    <p class="subtitulo">
-                        Cada sesión parte de tus dudas y termina con un plan claro
-                        para seguir practicando.
-                    </p>
-                </div>
+        <section class="metricas">
+            <article class="tarjeta metrica">
+                <span class="subtitulo">Pendientes</span>
+                <strong id="pendientes">0</strong>
             </article>
-
-            <aside class="panel">
-                <h3>Elige un horario</h3>
-                <div class="campo">
-                    <label for="fecha-perfil">Fecha</label>
-                    <input id="fecha-perfil" type="date">
-                </div>
-                <div class="horarios">
-                    <button class="hora" data-hora="14:00" type="button">14:00</button>
-                    <button class="hora" data-hora="15:00" type="button">15:00</button>
-                    <button class="hora" data-hora="16:00" type="button">16:00</button>
-                </div>
-                <a class="boton ancho margen-superior" id="reservar" href="reservar_tutorias.html">
-                    Reservar tutoría
-                </a>
-            </aside>
+            <article class="tarjeta metrica">
+                <span class="subtitulo">Confirmadas</span>
+                <strong id="confirmadas">0</strong>
+            </article>
+            <article class="tarjeta metrica">
+                <span class="subtitulo">Calificación</span>
+                <strong class="calificacion">4.9 de 5</strong>
+            </article>
         </section>
+
+        <section class="panel tabla-wrap">
+            <div class="titulo-pagina">
+                <div>
+                    <h2>Solicitudes recientes</h2>
+                    <span class="subtitulo">Acepta o rechaza cada solicitud.</span>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Estudiante</th>
+                        <th>Curso</th>
+                        <th>Fecha</th>
+                        <th>Modalidad</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-solicitudes"></tbody>
+            </table>
+        </section>
+
+        <div class="modal-cancelacion" id="modal-rechazo" hidden>
+            <section class="panel modal-contenido" role="dialog" aria-modal="true" aria-labelledby="titulo-rechazo">
+                <button class="modal-cerrar" id="cerrar-rechazo" type="button" aria-label="Cerrar">X</button>
+
+                <span class="eyebrow">Rechazar solicitud</span>
+                <h2 id="titulo-rechazo">Cuéntale al estudiante qué ocurrió</h2>
+
+                <p class="subtitulo">
+                    El estudiante podrá ver la razón y tu mensaje en su historial.
+                </p>
+
+                <div class="resumen-cancelacion" id="resumen-rechazo"></div>
+
+                <form id="form-rechazo">
+                    <div class="campo">
+                        <label for="motivo-rechazo">Razón del rechazo</label>
+
+                        <select id="motivo-rechazo" required>
+                            <option value="">Selecciona una razón</option>
+                            <option value="No tengo disponibilidad en ese horario">No tengo disponibilidad en ese horario</option>
+                            <option value="Ya tengo otra tutoría a esa hora">Ya tengo otra tutoría a esa hora</option>
+                            <option value="No manejo ese tema a profundidad">No manejo ese tema a profundidad</option>
+                            <option value="Problema personal">Tuve un problema personal</option>
+                            <option value="Otro motivo">Otro motivo</option>
+                        </select>
+                    </div>
+
+                    <div class="campo">
+                        <label for="mensaje-rechazo">Mensaje para el estudiante</label>
+
+                        <textarea id="mensaje-rechazo" minlength="10" maxlength="300" placeholder="Escribe un mensaje breve y respetuoso" required></textarea>
+
+                        <small class="subtitulo">
+                            Entre 10 y 300 caracteres.
+                        </small>
+                    </div>
+
+                    <div id="mensaje-error-rechazo" class="mensaje-error"></div>
+
+                    <div class="acciones">
+                        <button class="boton peligro" type="submit">Confirmar rechazo</button>
+                        <button class="boton secundario" id="conservar-solicitud" type="button">Volver</button>
+                    </div>
+                </form>
+            </section>
+        </div>
     </main>
+
     <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
 </body>
