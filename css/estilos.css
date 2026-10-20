@@ -919,3 +919,202 @@ th {
         grid-template-columns: 1fr;
     }
 }
+
+.pagina-error {
+    min-height: 100vh;
+    overflow: hidden;
+    background:
+        radial-gradient(
+            circle at 50% 42%,
+            rgba(57, 232, 124, 0.14),
+            transparent 34%
+        ),
+        var(--negro);
+}
+
+.error-401 {
+    display: grid;
+    min-height: 100vh;
+    place-items: center;
+    padding: 40px 20px;
+}
+
+.error-contenido {
+    width: min(720px, 100%);
+    text-align: center;
+}
+
+.error-contenido h1 {
+    max-width: 700px;
+    margin: 18px auto 12px;
+    font-size: clamp(2rem, 5vw, 3.8rem);
+}
+
+.error-descripcion {
+    margin-bottom: 26px;
+    color: var(--texto-secundario);
+    font-size: 1.05rem;
+}
+
+.cerebro-error {
+    position: relative;
+    isolation: isolate;
+    width: min(430px, 86vw);
+    margin: 16px auto 8px;
+}
+
+.cerebro-error svg {
+    position: relative;
+    z-index: 2;
+    display: block;
+    width: 100%;
+    filter: drop-shadow(0 20px 36px rgba(57, 232, 124, 0.18));
+    animation: cerebro-flotante 3.4s ease-in-out infinite;
+}
+
+.cerebro-sombra {
+    fill: #102d1d;
+}
+
+.cerebro-linea,
+.cerebro-pliegue {
+    fill: none;
+    stroke: var(--verde);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.cerebro-linea {
+    stroke-width: 8;
+}
+
+.cerebro-pliegue {
+    opacity: 0.62;
+    stroke-width: 5;
+}
+
+.cerebro-detalle {
+    fill: none;
+    opacity: 0.72;
+    stroke: var(--verde-fuerte);
+    stroke-linecap: round;
+    stroke-width: 4;
+}
+
+.placa-error {
+    fill: var(--negro);
+    stroke: var(--verde);
+    stroke-width: 5;
+}
+
+.numero-error {
+    fill: var(--texto);
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    font-size: 70px;
+    font-weight: 950;
+    letter-spacing: -6px;
+    paint-order: stroke;
+    stroke: var(--negro-suave);
+    stroke-width: 8px;
+}
+
+.interrogacion {
+    position: absolute;
+    z-index: 1;
+    bottom: 67%;
+    left: 50%;
+    color: var(--verde);
+    font-size: clamp(1.4rem, 4vw, 2.4rem);
+    font-weight: 950;
+    opacity: 0;
+    filter: blur(0);
+    text-shadow: 0 0 14px rgba(57, 232, 124, 0.65);
+    animation: humo-interrogacion 4.8s ease-out infinite;
+}
+
+.interrogacion-1 {
+    --inicio-x: -100px;
+    --curva-x: -145px;
+    --final-x: -115px;
+    animation-delay: -0.8s;
+}
+
+.interrogacion-2 {
+    --inicio-x: -58px;
+    --curva-x: -18px;
+    --final-x: -48px;
+    animation-delay: -2.4s;
+}
+
+.interrogacion-3 {
+    --inicio-x: -8px;
+    --curva-x: -48px;
+    --final-x: 5px;
+    animation-delay: -4s;
+}
+
+.interrogacion-4 {
+    --inicio-x: 42px;
+    --curva-x: 88px;
+    --final-x: 55px;
+    animation-delay: -1.6s;
+}
+
+.interrogacion-5 {
+    --inicio-x: 92px;
+    --curva-x: 135px;
+    --final-x: 112px;
+    animation-delay: -3.2s;
+}
+
+.interrogacion-6 {
+    --inicio-x: 18px;
+    --curva-x: 55px;
+    --final-x: 28px;
+    animation-delay: -4.8s;
+}
+
+@keyframes cerebro-flotante {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes humo-interrogacion {
+    0% {
+        opacity: 0;
+        filter: blur(1px);
+        transform: translate(
+            calc(-50% + var(--inicio-x)),
+            20px
+        ) scale(0.35) rotate(-12deg);
+    }
+
+    15% {
+        opacity: 0.95;
+    }
+
+    52% {
+        opacity: 0.75;
+        filter: blur(1.5px);
+        transform: translate(
+            calc(-50% + var(--curva-x)),
+            -90px
+        ) scale(0.9) rotate(8deg);
+    }
+
+    100% {
+        opacity: 0;
+        filter: blur(5px);
+        transform: translate(
+            calc(-50% + var(--final-x)),
+            -205px
+        ) scale(1.45) rotate(-5deg);
+    }
+}
+
