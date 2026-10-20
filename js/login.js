@@ -1,248 +1,234 @@
-const formularioLogin = document.getElementById("form-login");
-const formularioRegistro = document.getElementById("form-registro");
 
-const pestanaLogin = document.getElementById("tab-login");
-const pestanaRegistro = document.getElementById("tab-registro");
-const enlaceIrRegistro = document.getElementById("ir-registro");
-const enlaceIrLogin = document.getElementById("ir-login");
+const formularioLogin = document.getElementById('form-login')
+const formularioRegistro = document.getElementById('form-registro')
 
-const inputCorreo = document.getElementById("correo");
-const inputContrasena = document.getElementById("contrasena");
-const mensajeLogin = document.getElementById("mensaje-login");
+const pestanaLogin = document.getElementById('tab-login')
+const pestanaRegistro = document.getElementById('tab-registro')
+const enlaceIrRegistro = document.getElementById('ir-registro')
+const enlaceIrLogin = document.getElementById('ir-login')
 
-const inputNombreRegistro = document.getElementById("registro-nombre");
-const inputCorreoRegistro = document.getElementById("registro-correo");
-const inputContrasenaRegistro = document.getElementById("registro-contrasena");
-const inputConfirmarRegistro = document.getElementById("registro-confirmar");
-const mensajeRegistro = document.getElementById("mensaje-registro");
-const estadoConfirmacion = document.getElementById("estado-confirmacion");
+const inputCorreo = document.getElementById('correo')
+const inputContrasena = document.getElementById('contrasena')
+const mensajeLogin = document.getElementById('mensaje-login')
+
+const inputNombreRegistro = document.getElementById('registro-nombre')
+const inputCorreoRegistro = document.getElementById('registro-correo')
+const inputContrasenaRegistro = document.getElementById('registro-contrasena')
+const inputConfirmarRegistro = document.getElementById('registro-confirmar')
+const mensajeRegistro = document.getElementById('mensaje-registro')
+const estadoConfirmacion = document.getElementById('estado-confirmacion')
 
 const requisitosVisuales = {
-    longitud: document.getElementById("requisito-longitud"),
-    mayuscula: document.getElementById("requisito-mayuscula"),
-    minuscula: document.getElementById("requisito-minuscula"),
-    numero: document.getElementById("requisito-numero"),
-    especial: document.getElementById("requisito-especial")
-};
+    longitud: document.getElementById('requisito-longitud'),
+    mayuscula: document.getElementById('requisito-mayuscula'),
+    minuscula: document.getElementById('requisito-minuscula'),
+    numero: document.getElementById('requisito-numero'),
+    especial: document.getElementById('requisito-especial')
+}
 
-comprobarSesionExistente();
-configurarPestanas();
-configurarBotonesVisibilidad();
-configurarValidacionEnTiempoReal();
+comprobarSesionExistente()
+configurarPestanas()
+configurarBotonesVisibilidad()
+configurarValidacionEnTiempoReal()
+configurarCamposRegistro()
 
-formularioLogin.addEventListener("submit", function (evento) {
-    evento.preventDefault();
-    limpiarMensaje(mensajeLogin);
+formularioLogin.addEventListener('submit', async function(evento) {
+    evento.preventDefault()
+    limpiarMensaje(mensajeLogin)
 
-    const correo = inputCorreo.value.trim().toLowerCase();
-    const contrasena = inputContrasena.value;
-    const rolSeleccionado = obtenerRolSeleccionado("rol");
+    const correo = inputCorreo.value.trim().toLowerCase()
+    const contrasena = inputContrasena.value
 
-    if (!validarCorreoInstitucional(correo, mensajeLogin, inputCorreo)) {
-        return;
+    if (!validarCorreoInstitucional(correo, mensajeLogin, inputCorreo)) return
+
+    if (!contrasena) {
+        mostrarMensaje(mensajeLogin, 'Ingresa tu contraseña.', 'error')
+        return
     }
 
-    if (contrasena === "") {
-        mostrarMensaje(mensajeLogin, "Ingresa tu contraseña.", "error");
-        inputContrasena.focus();
-        return;
+    const boton = formularioLogin.querySelector('button[type="submit"]')
+    boton.disabled = true
+    boton.textContent = 'Iniciando sesión...'
+
+    try {
+        const data = await apiRequest('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({correo, contrasena})
+        })
+
+        const usuario = data.usuario
+        const rol = usuario.tipoUsuario.toLowerCase()
+
+        if (!['estudiante', 'tutor'].includes(rol) || !data.token) {
+            throw new Error('La respuesta del servidor no es válida')
+        }
+
+        const sesion = {
+            id: usuario.id,
+            nombre: usuario.nombre,
+            correo: usuario.correo,
+            rol,
+            fechaInicioSesion: new Date().toISOString()
+        }
+
+        localStorage.setItem('token', data.token)
+        localStorage.setItem('usuario', JSON.stringify(sesion))
+
+        window.location.replace('index.html')
+    } catch (err) {
+        mostrarMensaje(mensajeLogin, err.message || 'Error al iniciar sesión', 'error')
+    } finally {
+        boton.disabled = false
+        boton.textContent = 'Iniciar sesión'
     }
+})
 
-    const usuarios = obtenerUsuarios();
+formularioRegistro.addEventListener('submit', async function(evento) {
+    evento.preventDefault()
+    limpiarMensaje(mensajeRegistro)
 
-    const usuarioEncontrado = usuarios.find(function (usuario) {
-        return usuario.correo === correo;
-    });
-
-    if (!usuarioEncontrado) {
-        mostrarMensaje(
-            mensajeLogin,
-            "No existe una cuenta con ese correo. Primero debes registrarte.",
-            "error"
-        );
-
-        inputCorreo.focus();
-        return;
-    }
-
-    if (usuarioEncontrado.contrasena !== contrasena) {
-        mostrarMensaje(mensajeLogin, "La contraseña es incorrecta.", "error");
-        inputContrasena.focus();
-        return;
-    }
-
-    if (usuarioEncontrado.rol !== rolSeleccionado) {
-        mostrarMensaje(
-            mensajeLogin,
-            "Esta cuenta está registrada como " + usuarioEncontrado.rol + ".",
-            "error"
-        );
-
-        return;
-    }
-
-    iniciarSesion(usuarioEncontrado);
-});
-
-formularioRegistro.addEventListener("submit", function (evento) {
-    evento.preventDefault();
-    limpiarMensaje(mensajeRegistro);
-
-    const nombre = inputNombreRegistro.value.trim();
-    const correo = inputCorreoRegistro.value.trim().toLowerCase();
-    const contrasena = inputContrasenaRegistro.value;
-    const confirmarContrasena = inputConfirmarRegistro.value;
-    const rolSeleccionado = obtenerRolSeleccionado("rol-registro");
+    const nombre = inputNombreRegistro.value.trim()
+    const correo = inputCorreoRegistro.value.trim().toLowerCase()
+    const contrasena = inputContrasenaRegistro.value
+    const confirmarContrasena = inputConfirmarRegistro.value
+    const rol = document.querySelector('input[name="rol-registro"]:checked').value
 
     if (nombre.length < 3) {
-        mostrarMensaje(mensajeRegistro, "Escribe tu nombre completo.", "error");
-        inputNombreRegistro.focus();
-        return;
+        mostrarMensaje(mensajeRegistro, 'Escribe tu nombre completo.', 'error')
+        return
     }
 
-    if (!validarCorreoInstitucional(correo, mensajeRegistro, inputCorreoRegistro)) {
-        return;
-    }
+    if (!validarCorreoInstitucional(correo, mensajeRegistro, inputCorreoRegistro)) return
 
-    const requisitos = evaluarContrasena(contrasena);
-
-    if (!requisitos.esSegura) {
-        mostrarMensaje(
-            mensajeRegistro,
-            "La contraseña todavía no cumple todos los requisitos.",
-            "error"
-        );
-
-        inputContrasenaRegistro.focus();
-        return;
+    if (!evaluarContrasena(contrasena).esSegura) {
+        mostrarMensaje(mensajeRegistro, 'La contraseña no cumple todos los requisitos.', 'error')
+        return
     }
 
     if (contrasena !== confirmarContrasena) {
-        mostrarMensaje(mensajeRegistro, "Las contraseñas no coinciden.", "error");
-        inputConfirmarRegistro.focus();
-        return;
-    }
-
-    const usuarios = obtenerUsuarios();
-
-    const correoYaRegistrado = usuarios.some(function (usuario) {
-        return usuario.correo === correo;
-    });
-
-    if (correoYaRegistrado) {
-        mostrarMensaje(
-            mensajeRegistro,
-            "Ya existe una cuenta registrada con ese correo.",
-            "error"
-        );
-
-        inputCorreoRegistro.focus();
-        return;
+        mostrarMensaje(mensajeRegistro, 'Las contraseñas no coinciden.', 'error')
+        return
     }
 
     const nuevoUsuario = {
-        id: Date.now(),
-        nombre: nombre,
-        correo: correo,
-        contrasena: contrasena,
-        rol: rolSeleccionado,
-        fechaRegistro: new Date().toISOString()
-    };
+        nombre,
+        correo,
+        contrasena,
+        tipoUsuario: rol === 'tutor' ? 'Tutor' : 'Estudiante'
+    }
 
-    usuarios.push(nuevoUsuario);
-    guardarUsuarios(usuarios);
+    if (rol === 'estudiante') {
+        nuevoUsuario.carnet = document.getElementById('registro-carnet').value.trim()
+    } else {
+        nuevoUsuario.experiencia = document.getElementById('registro-experiencia').value.trim()
+        nuevoUsuario.precioHora = Number(document.getElementById('registro-precio').value)
+        nuevoUsuario.modalidad = document.getElementById('registro-modalidad').value
+    }
 
-    mostrarMensaje(
-        mensajeRegistro,
-        "Cuenta creada correctamente. Ahora puedes iniciar sesión.",
-        "exito"
-    );
+    const boton = formularioRegistro.querySelector('button[type="submit"]')
+    boton.disabled = true
+    boton.textContent = 'Creando cuenta...'
 
-    formularioRegistro.reset();
-    actualizarRequisitosContrasena("");
-    actualizarCoincidenciaContrasenas();
+    try {
+        await apiRequest('/auth/register', {
+            method: 'POST',
+            body: JSON.stringify(nuevoUsuario)
+        })
 
-    setTimeout(function () {
-        mostrarFormulario("login");
-        inputCorreo.value = correo;
-        inputContrasena.focus();
-    }, 1200);
-});
+        mostrarMensaje(mensajeRegistro, 'Cuenta creada correctamente. Ahora inicia sesión.', 'exito')
+        formularioRegistro.reset()
+        actualizarRequisitosContrasena('')
+        actualizarCoincidenciaContrasenas()
+        configurarCamposRegistro()
+
+        setTimeout(() => {
+            mostrarFormulario('login')
+            inputCorreo.value = correo
+            inputContrasena.focus()
+        }, 1200)
+    } catch (err) {
+        mostrarMensaje(mensajeRegistro, err.message || 'Error al registrar usuario', 'error')
+    } finally {
+        boton.disabled = false
+        boton.textContent = 'Crear cuenta'
+    }
+})
+
+function configurarCamposRegistro() {
+    const rol = document.querySelector('input[name="rol-registro"]:checked').value
+    const camposEstudiante = document.getElementById('campos-estudiante')
+    const camposTutor = document.getElementById('campos-tutor')
+
+    camposEstudiante.hidden = rol !== 'estudiante'
+    camposTutor.hidden = rol !== 'tutor'
+
+    camposEstudiante.querySelectorAll('input').forEach(input => {
+        input.disabled = rol !== 'estudiante'
+    })
+
+    camposTutor.querySelectorAll('input, select').forEach(input => {
+        input.disabled = rol !== 'tutor'
+    })
+}
 
 function configurarPestanas() {
-    pestanaLogin.addEventListener("click", function () {
-        mostrarFormulario("login");
-    });
+    pestanaLogin.addEventListener('click', () => mostrarFormulario('login'))
+    pestanaRegistro.addEventListener('click', () => mostrarFormulario('registro'))
 
-    pestanaRegistro.addEventListener("click", function () {
-        mostrarFormulario("registro");
-    });
+    enlaceIrRegistro.addEventListener('click', evento => {
+        evento.preventDefault()
+        mostrarFormulario('registro')
+    })
 
-    enlaceIrRegistro.addEventListener("click", function (evento) {
-        evento.preventDefault();
-        mostrarFormulario("registro");
-    });
+    enlaceIrLogin.addEventListener('click', evento => {
+        evento.preventDefault()
+        mostrarFormulario('login')
+    })
 
-    enlaceIrLogin.addEventListener("click", function (evento) {
-        evento.preventDefault();
-        mostrarFormulario("login");
-    });
+    document.querySelectorAll('input[name="rol-registro"]').forEach(input => {
+        input.addEventListener('change', configurarCamposRegistro)
+    })
 }
 
 function mostrarFormulario(formularioActivo) {
-    const mostrarLogin = formularioActivo === "login";
+    const mostrarLogin = formularioActivo === 'login'
 
-    formularioLogin.hidden = !mostrarLogin;
-    formularioRegistro.hidden = mostrarLogin;
+    formularioLogin.hidden = !mostrarLogin
+    formularioRegistro.hidden = mostrarLogin
 
-    pestanaLogin.classList.toggle("activa", mostrarLogin);
-    pestanaRegistro.classList.toggle("activa", !mostrarLogin);
+    pestanaLogin.classList.toggle('activa', mostrarLogin)
+    pestanaRegistro.classList.toggle('activa', !mostrarLogin)
+    pestanaLogin.classList.toggle('secundario', !mostrarLogin)
+    pestanaRegistro.classList.toggle('secundario', mostrarLogin)
 
-    pestanaLogin.classList.toggle("secundario", !mostrarLogin);
-    pestanaRegistro.classList.toggle("secundario", mostrarLogin);
+    pestanaLogin.setAttribute('aria-selected', String(mostrarLogin))
+    pestanaRegistro.setAttribute('aria-selected', String(!mostrarLogin))
 
-    pestanaLogin.setAttribute("aria-selected", String(mostrarLogin));
-    pestanaRegistro.setAttribute("aria-selected", String(!mostrarLogin));
+    limpiarMensaje(mensajeLogin)
+    limpiarMensaje(mensajeRegistro)
 
-    limpiarMensaje(mensajeLogin);
-    limpiarMensaje(mensajeRegistro);
-
-    if (mostrarLogin) {
-        inputCorreo.focus();
-    } else {
-        inputNombreRegistro.focus();
-    }
+    if (mostrarLogin) inputCorreo.focus()
+    else inputNombreRegistro.focus()
 }
 
 function configurarBotonesVisibilidad() {
-    const botones = document.querySelectorAll("[data-mostrar-contrasena]");
-
-    botones.forEach(function (boton) {
-        boton.addEventListener("click", function () {
-            const idInput = boton.dataset.mostrarContrasena;
-            const input = document.getElementById(idInput);
-            const estaOculta = input.type === "password";
-
-            if (estaOculta) {
-                input.type = "text";
-                boton.textContent = "Ocultar";
-            } else {
-                input.type = "password";
-                boton.textContent = "Mostrar";
-            }
-        });
-    });
+    document.querySelectorAll('[data-mostrar-contrasena]').forEach(boton => {
+        boton.addEventListener('click', function() {
+            const input = document.getElementById(boton.dataset.mostrarContrasena)
+            const oculta = input.type === 'password'
+            input.type = oculta ? 'text' : 'password'
+            boton.textContent = oculta ? 'Ocultar' : 'Mostrar'
+        })
+    })
 }
 
 function configurarValidacionEnTiempoReal() {
-    inputContrasenaRegistro.addEventListener("input", function () {
-        actualizarRequisitosContrasena(inputContrasenaRegistro.value);
-        actualizarCoincidenciaContrasenas();
-    });
+    inputContrasenaRegistro.addEventListener('input', function() {
+        actualizarRequisitosContrasena(inputContrasenaRegistro.value)
+        actualizarCoincidenciaContrasenas()
+    })
 
-    inputConfirmarRegistro.addEventListener("input", function () {
-        actualizarCoincidenciaContrasenas();
-    });
+    inputConfirmarRegistro.addEventListener('input', actualizarCoincidenciaContrasenas)
 }
 
 function evaluarContrasena(contrasena) {
@@ -252,155 +238,76 @@ function evaluarContrasena(contrasena) {
         minuscula: /[a-z]/.test(contrasena),
         numero: /[0-9]/.test(contrasena),
         especial: /[^A-Za-z0-9]/.test(contrasena)
-    };
+    }
 
-    requisitos.esSegura = (
-        requisitos.longitud
-        && requisitos.mayuscula
-        && requisitos.minuscula
-        && requisitos.numero
-        && requisitos.especial
-    );
-
-    return requisitos;
+    requisitos.esSegura = Object.values(requisitos).every(Boolean)
+    return requisitos
 }
 
 function actualizarRequisitosContrasena(contrasena) {
-    const requisitos = evaluarContrasena(contrasena);
+    const requisitos = evaluarContrasena(contrasena)
 
-    Object.keys(requisitosVisuales).forEach(function (nombreRequisito) {
-        const elemento = requisitosVisuales[nombreRequisito];
-        const requisitoCumplido = requisitos[nombreRequisito];
-
-        elemento.classList.toggle("cumplido", requisitoCumplido);
-    });
+    Object.keys(requisitosVisuales).forEach(nombre => {
+        requisitosVisuales[nombre].classList.toggle('cumplido', requisitos[nombre])
+    })
 }
 
 function actualizarCoincidenciaContrasenas() {
-    const contrasena = inputContrasenaRegistro.value;
-    const confirmacion = inputConfirmarRegistro.value;
+    const contrasena = inputContrasenaRegistro.value
+    const confirmacion = inputConfirmarRegistro.value
 
-    estadoConfirmacion.classList.remove("coincide", "no-coincide");
+    estadoConfirmacion.classList.remove('coincide', 'no-coincide')
 
-    if (confirmacion === "") {
-        estadoConfirmacion.textContent = "";
-        return;
+    if (!confirmacion) {
+        estadoConfirmacion.textContent = ''
+        return
     }
 
-    if (contrasena === confirmacion) {
-        estadoConfirmacion.textContent = "Las contraseñas coinciden.";
-        estadoConfirmacion.classList.add("coincide");
-    } else {
-        estadoConfirmacion.textContent = "Las contraseñas no coinciden.";
-        estadoConfirmacion.classList.add("no-coincide");
-    }
+    const coincide = contrasena === confirmacion
+    estadoConfirmacion.textContent = coincide ? 'Las contraseñas coinciden.' : 'Las contraseñas no coinciden.'
+    estadoConfirmacion.classList.add(coincide ? 'coincide' : 'no-coincide')
 }
 
-function validarCorreoInstitucional(correo, contenedorMensaje, input) {
-    if (correo === "") {
-        mostrarMensaje(contenedorMensaje, "Ingresa tu correo institucional.", "error");
-        input.focus();
-        return false;
+function validarCorreoInstitucional(correo, contenedor, input) {
+    if (!correo) {
+        mostrarMensaje(contenedor, 'Ingresa tu correo institucional.', 'error')
+        input.focus()
+        return false
     }
 
-    const patronCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!patronCorreo.test(correo)) {
-        mostrarMensaje(contenedorMensaje, "Ingresa un correo con formato válido.", "error");
-        input.focus();
-        return false;
+    if (!/^[^\s@]+@uvg\.edu\.gt$/.test(correo)) {
+        mostrarMensaje(contenedor, 'Debes utilizar un correo válido @uvg.edu.gt.', 'error')
+        input.focus()
+        return false
     }
 
-    if (!correo.endsWith("@uvg.edu.gt")) {
-        mostrarMensaje(
-            contenedorMensaje,
-            "Debes utilizar un correo terminado en @uvg.edu.gt.",
-            "error"
-        );
-
-        input.focus();
-        return false;
-    }
-
-    return true;
-}
-
-function obtenerRolSeleccionado(nombreGrupo) {
-    const inputRol = document.querySelector(
-        'input[name="' + nombreGrupo + '"]:checked'
-    );
-
-    return inputRol ? inputRol.value : null;
-}
-
-function obtenerUsuarios() {
-    const usuariosGuardados = localStorage.getItem("usuarios");
-
-    if (!usuariosGuardados) {
-        return [];
-    }
-
-    try {
-        const usuarios = JSON.parse(usuariosGuardados);
-        return Array.isArray(usuarios) ? usuarios : [];
-    } catch (error) {
-        localStorage.removeItem("usuarios");
-        return [];
-    }
-}
-
-function guardarUsuarios(usuarios) {
-    localStorage.setItem("usuarios", JSON.stringify(usuarios));
-}
-
-function iniciarSesion(usuarioRegistrado) {
-    const sesion = {
-        id: usuarioRegistrado.id,
-        nombre: usuarioRegistrado.nombre,
-        correo: usuarioRegistrado.correo,
-        rol: usuarioRegistrado.rol,
-        fechaInicioSesion: new Date().toISOString()
-    };
-
-    localStorage.setItem("usuario", JSON.stringify(sesion));
-    redirigirSegunRol(sesion.rol);
+    return true
 }
 
 function comprobarSesionExistente() {
-    const sesionExistenteTexto = localStorage.getItem("usuario");
+    const usuarioTexto = localStorage.getItem('usuario')
 
-    if (!sesionExistenteTexto) {
-        return;
+    if (!usuarioTexto || !tokenVigente()) {
+        cerrarSesionLocal()
+        return
     }
 
     try {
-        const sesionExistente = JSON.parse(sesionExistenteTexto);
-        redirigirSegunRol(sesionExistente.rol);
-    } catch (error) {
-        localStorage.removeItem("usuario");
+        const usuario = JSON.parse(usuarioTexto)
+        if (!['estudiante', 'tutor'].includes(usuario.rol)) throw new Error('Sesión inválida')
+        window.location.replace('index.html')
+    } catch (err) {
+        cerrarSesionLocal()
     }
 }
 
 function mostrarMensaje(contenedor, mensaje, tipo) {
-    contenedor.textContent = mensaje;
-    contenedor.classList.remove("mensaje-error", "mensaje-exito");
-
-    if (tipo === "exito") {
-        contenedor.classList.add("mensaje-exito");
-    } else {
-        contenedor.classList.add("mensaje-error");
-    }
+    contenedor.textContent = mensaje
+    contenedor.classList.remove('mensaje-error', 'mensaje-exito')
+    contenedor.classList.add(tipo === 'exito' ? 'mensaje-exito' : 'mensaje-error')
 }
 
 function limpiarMensaje(contenedor) {
-    contenedor.textContent = "";
-    contenedor.classList.remove("mensaje-error", "mensaje-exito");
-}
-
-function redirigirSegunRol(rol) {
-    if (rol === "tutor") {
-        window.location.replace("panel_tutor.html");
-    } else {
-        window.location.replace("index.html");
-    }
+    contenedor.textContent = ''
+    contenedor.classList.remove('mensaje-error', 'mensaje-exito')
 }
