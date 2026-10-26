@@ -112,33 +112,117 @@ function normalizarTutorDesdeAPI(tutorOriginal, indice) {
     const tutor = tutorOriginal || {};
     const usuario = tutor.usuario || tutor.user || {};
     const perfil = tutor.perfil || tutor.profile || {};
-    const nombre = tutor.nombre || tutor.name || usuario.nombre || usuario.name
-        || perfil.nombre || perfil.name || "Tutor";
-    const cursos = convertirALista(
-        tutor.cursos || tutor.materias || tutor.courses || perfil.cursos || perfil.courses
-    ).map((valor) => typeof valor === "string" ? valor : (valor.nombre || valor.name || ""))
-        .filter(Boolean);
+
+    const nombre =
+        tutor.nombre
+        || tutor.name
+        || usuario.nombre
+        || usuario.name
+        || perfil.nombre
+        || perfil.name
+        || "Tutor";
+
+    const cursosOriginales = convertirALista(
+        tutor.cursos
+        || tutor.materias
+        || tutor.courses
+        || perfil.cursos
+        || perfil.courses
+    );
+
+    const cursosDetalle = cursosOriginales
+        .map(function (curso) {
+            if (typeof curso === "string") {
+                return {
+                    id: "",
+                    nombre: curso
+                };
+            }
+
+            return {
+                id: curso._id || curso.id || "",
+                nombre: curso.nombre || curso.name || ""
+            };
+        })
+        .filter(function (curso) {
+            return curso.nombre;
+        });
+
+    const cursos = cursosDetalle.map(function (curso) {
+        return curso.nombre;
+    });
+
     const modalidad = convertirALista(
-        tutor.modalidad || tutor.modalidades || tutor.modality || perfil.modalidad
-    ).map((valor) => typeof valor === "string" ? valor : (valor.nombre || valor.name || ""))
+        tutor.modalidad
+        || tutor.modalidades
+        || tutor.modality
+        || perfil.modalidad
+    )
+        .map(function (valor) {
+            if (typeof valor === "string") {
+                return valor;
+            }
+
+            return valor.nombre || valor.name || "";
+        })
         .filter(Boolean);
-    const precioBruto = tutor.precio ?? tutor.precioHora ?? tutor.price
-        ?? tutor.pricePerHour ?? perfil.precio ?? perfil.precioHora;
+
+    const precioBruto =
+        tutor.precio
+        ?? tutor.precioHora
+        ?? tutor.price
+        ?? tutor.pricePerHour
+        ?? perfil.precio
+        ?? perfil.precioHora;
+
     const precio = Number(precioBruto);
-    const ratingBruto = tutor.rating ?? tutor.calificacion ?? tutor.promedioCalificacion;
+
+    const ratingBruto =
+        tutor.rating
+        ?? tutor.calificacion
+        ?? tutor.promedioCalificacion;
+
     const rating = Number(ratingBruto);
-    const iniciales = nombre.trim().split(/\s+/).slice(0, 2)
-        .map((parte) => parte.charAt(0).toUpperCase()).join("") || "T";
+
+    const iniciales = nombre
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map(function (parte) {
+            return parte.charAt(0).toUpperCase();
+        })
+        .join("") || "T";
 
     return {
-        id: tutor.id ?? tutor._id ?? tutor.usuarioId ?? usuario.id ?? usuario._id ?? indice,
-        nombre,
+        id:
+            tutor.id
+            ?? tutor._id
+            ?? tutor.usuarioId
+            ?? usuario.id
+            ?? usuario._id
+            ?? String(indice),
+
+        nombre: nombre,
         iniciales: tutor.iniciales || iniciales,
-        cursos,
-        modalidad,
-        experiencia: tutor.experiencia || tutor.experience || perfil.experiencia || "",
-        precio: Number.isFinite(precio) && precio >= 0 ? precio : null,
-        rating: Number.isFinite(rating) && rating > 0 ? rating : null,
+        cursos: cursos,
+        cursosDetalle: cursosDetalle,
+        modalidad: modalidad,
+        experiencia:
+            tutor.experiencia
+            || tutor.experience
+            || perfil.experiencia
+            || "",
+
+        precio:
+            Number.isFinite(precio) && precio >= 0
+                ? precio
+                : null,
+
+        rating:
+            Number.isFinite(rating) && rating > 0
+                ? rating
+                : null,
+
         color: indice % 2 === 1 ? "alternativo" : ""
     };
 }
@@ -198,7 +282,7 @@ function crearTarjetaTutor(tutor) {
             </div>
             <div>
                 <div class="precio">${precio}</div>
-                <a class="boton pequeno" href="perfil_tutor.html?id=${encodeURIComponent(tutor.id)}">
+                <a class="boton pequeno" data-tutor-id="${escaparHTML(tutor.id)}" href="perfil_tutor.html?id=${encodeURIComponent(tutor.id)}">
                     Ver perfil
                 </a>
             </div>
@@ -290,17 +374,71 @@ function iniciarBusqueda() {
             cargarTutores()
         })
     }
+    lista.addEventListener("click", function (evento) {
+    const enlaceTutor = evento.target.closest("[data-tutor-id]");
 
+    if (!enlaceTutor) {
+        return;
+    }
+
+    const idTutor = enlaceTutor.dataset.tutorId;
+
+    const tutorSeleccionado = tutoresDB.find(function (tutor) {
+        return String(tutor.id) === String(idTutor);
+    });
+
+    if (tutorSeleccionado) {
+        localStorage.setItem(
+            "tutouvg_tutor_actual",
+            JSON.stringify(tutorSeleccionado)
+        );
+
+        localStorage.setItem(
+            "tutouvg_tutor",
+            String(tutorSeleccionado.id)
+        );
+    }
+});
     cargarTutores()
 }
 
 function obtenerTutorActual() {
     const parametros = new URLSearchParams(location.search);
-    const idGuardado = localStorage.getItem("tutouvg_tutor") || 1;
-    const idTutor = Number(parametros.get("id") || idGuardado);
-    const tutor = tutores.find((elemento) => elemento.id === idTutor) || tutores[0];
 
-    localStorage.setItem("tutouvg_tutor", tutor.id);
+    const idTutor =
+        parametros.get("id")
+        || localStorage.getItem("tutouvg_tutor");
+
+    let tutorGuardado = null;
+
+    try {
+        tutorGuardado = JSON.parse(
+            localStorage.getItem("tutouvg_tutor_actual")
+        );
+    } catch (error) {
+        tutorGuardado = null;
+    }
+
+    const tutorEnMemoria = tutoresDB.find(function (tutor) {
+        return String(tutor.id) === String(idTutor);
+    });
+
+    const tutor = tutorEnMemoria || tutorGuardado;
+
+    if (!tutor) {
+        return null;
+    }
+
+    localStorage.setItem(
+        "tutouvg_tutor",
+        String(tutor.id)
+    );
+
+    localStorage.setItem(
+        "tutouvg_tutor_actual",
+        JSON.stringify(tutor)
+    );
+
     return tutor;
 }
 
@@ -503,38 +641,72 @@ function iniciarReserva() {
     const tutor = obtenerTutorActual();
     const usuario = obtenerUsuarioActual();
 
-    const inputFecha = seleccionar("#fecha");
+    if (!tutor) {
+        alert("No fue posible encontrar al tutor seleccionado.");
+        location.href = "buscar_tutores.html";
+        return;
+    }
 
+    const inputFecha = seleccionar("#fecha");
+    const inputHora = seleccionar("#hora");
+    const selectCurso = seleccionar("#curso");
+    const selectModalidad = seleccionar("#modalidad");
     const botonConfirmar = formulario.querySelector(
         'button[type="submit"]'
     );
 
-    const limites = configurarLimitesDeFecha(
-        inputFecha
-    );
+    const limites = configurarLimitesDeFecha(inputFecha);
 
-    const fechaGuardada = localStorage.getItem(
-        "tutouvg_fecha"
-    ) || "";
+    const fechaGuardada =
+        localStorage.getItem("tutouvg_fecha") || "";
 
     let confirmacionSolicitada = false;
 
-    seleccionar("#reserva-tutor").textContent =
-        tutor.nombre;
-
-    seleccionar("#resumen-tutor").textContent =
-        tutor.nombre;
+    seleccionar("#reserva-tutor").textContent = tutor.nombre;
+    seleccionar("#resumen-tutor").textContent = tutor.nombre;
 
     seleccionar("#resumen-precio").textContent =
-        `Q${tutor.precio}`;
+        tutor.precio === null
+            ? "No indicado"
+            : `Q${tutor.precio}`;
 
-    seleccionar("#curso").innerHTML = tutor.cursos
-        .map(
-            function (curso) {
-                return `<option>${curso}</option>`;
-            }
-        )
+    const cursosDisponibles = tutor.cursosDetalle || [];
+
+    selectCurso.innerHTML = cursosDisponibles
+        .filter(function (curso) {
+            return curso.id;
+        })
+        .map(function (curso) {
+            return `
+                <option value="${escaparHTML(curso.id)}">
+                    ${escaparHTML(curso.nombre)}
+                </option>
+            `;
+        })
         .join("");
+
+    if (!selectCurso.options.length) {
+        selectCurso.innerHTML =
+            '<option value="">No hay cursos disponibles</option>';
+
+        botonConfirmar.disabled = true;
+    }
+
+    const modalidadesDisponibles = tutor.modalidad || [];
+
+    if (modalidadesDisponibles.length > 0) {
+        selectModalidad.innerHTML = modalidadesDisponibles
+            .map(function (modalidad) {
+                const valor = String(modalidad).toUpperCase();
+
+                return `
+                    <option value="${escaparHTML(valor)}">
+                        ${escaparHTML(modalidad)}
+                    </option>
+                `;
+            })
+            .join("");
+    }
 
     if (
         fechaGuardada >= limites.fechaMinima
@@ -545,136 +717,139 @@ function iniciarReserva() {
         localStorage.removeItem("tutouvg_fecha");
     }
 
-    seleccionar("#hora").value =
+    inputHora.value =
         localStorage.getItem("tutouvg_hora")
         || "14:00";
 
-    inputFecha.addEventListener(
-        "change",
-        function () {
-            if (inputFecha.value) {
-                localStorage.setItem(
-                    "tutouvg_fecha",
-                    inputFecha.value
-                );
-            }
+    inputFecha.addEventListener("change", function () {
+        if (inputFecha.value) {
+            localStorage.setItem(
+                "tutouvg_fecha",
+                inputFecha.value
+            );
         }
-    );
+    });
 
     configurarEnterParaAvanzar(formulario);
 
-    botonConfirmar.addEventListener(
-        "click",
-        function () {
-            confirmacionSolicitada = true;
+    botonConfirmar.addEventListener("click", function () {
+        confirmacionSolicitada = true;
+    });
+
+    formulario.addEventListener("submit", async function (evento) {
+        evento.preventDefault();
+
+        if (!confirmacionSolicitada) {
+            return;
         }
-    );
 
-    formulario.addEventListener(
-        "submit",
-        function (evento) {
-            evento.preventDefault();
+        confirmacionSolicitada = false;
 
-            if (!confirmacionSolicitada) {
-                return;
-            }
+        const fecha = inputFecha.value;
+        const hora = inputHora.value;
 
-            confirmacionSolicitada = false;
-
-            const fecha = inputFecha.value;
-            const hora = seleccionar("#hora").value;
-
-            if (
-                fecha < limites.fechaMinima
-                || fecha > limites.fechaMaxima
-            ) {
-                alert(
-                    "Selecciona una fecha válida dentro del año actual."
-                );
-
-                inputFecha.focus();
-                return;
-            }
-
-            const fechaYHoraSeleccionada = new Date(
-                `${fecha}T${hora}`
+        if (
+            fecha < limites.fechaMinima
+            || fecha > limites.fechaMaxima
+        ) {
+            alert(
+                "Selecciona una fecha válida dentro del año actual."
             );
 
-            if (
-                fechaYHoraSeleccionada <= new Date()
-            ) {
-                alert(
-                    "Elige una fecha y hora futura."
-                );
+            inputFecha.focus();
+            return;
+        }
 
-                seleccionar("#hora").focus();
-                return;
-            }
+        const fechaYHoraSeleccionada = new Date(
+            `${fecha}T${hora}:00`
+        );
+
+        if (
+            Number.isNaN(fechaYHoraSeleccionada.getTime())
+            || fechaYHoraSeleccionada <= new Date()
+        ) {
+            alert("Elige una fecha y hora futura.");
+            inputHora.focus();
+            return;
+        }
+
+        const opcionCurso =
+            selectCurso.options[selectCurso.selectedIndex];
+
+        const opcionModalidad =
+            selectModalidad.options[selectModalidad.selectedIndex];
+
+        const solicitud = {
+            tutorId: String(tutor.id),
+            cursoId: selectCurso.value,
+            fecha: fechaYHoraSeleccionada.toISOString(),
+            cantidadHoras: 1,
+            modalidad: selectModalidad.value.toUpperCase()
+        };
+
+        botonConfirmar.disabled = true;
+        botonConfirmar.textContent = "Reservando...";
+
+        try {
+            const respuesta = await apiRequest(
+                "/tutoria/solicitar",
+                {
+                    method: "POST",
+                    body: JSON.stringify(solicitud)
+                }
+            );
+
+            const tutoriaCreada = respuesta.tutoria || {};
 
             const nuevaReserva = {
-                id: Date.now(),
+                id: tutoriaCreada._id || Date.now(),
                 tutor: tutor.nombre,
                 estudiante: usuario
                     ? usuario.nombre
                     : "Estudiante UVG",
+
                 estudianteCorreo: usuario
                     ? usuario.correo
                     : "",
-                curso: seleccionar("#curso").value,
-                modalidad: seleccionar(
-                    "#modalidad"
-                ).value,
+
+                curso: opcionCurso
+                    ? opcionCurso.textContent.trim()
+                    : "",
+
+                modalidad: opcionModalidad
+                    ? opcionModalidad.textContent.trim()
+                    : solicitud.modalidad,
+
                 fecha: fecha,
                 hora: hora,
-                detalles: seleccionar(
-                    "#detalles"
-                ).value.trim(),
+
+                detalles: seleccionar("#detalles")
+                    .value
+                    .trim(),
+
                 precio: tutor.precio,
                 estado: "Pendiente"
             };
 
-            const reservasActuales =
-                obtenerReservas();
-
-            const horarioOcupado = reservasActuales.some(
-                function (reservaExistente) {
-                    return (
-                        reservaExistente.tutor === tutor.nombre
-                        && reservaExistente.fecha === fecha
-                        && reservaExistente.hora === hora
-                        && (
-                            reservaExistente.estado === "Pendiente"
-                            || reservaExistente.estado === "Confirmada"
-                        )
-                    );
-                }
-            );
-
-            if (horarioOcupado) {
-                alert(
-                    "Ese tutor ya tiene una tutoría en ese horario. Elige otra fecha u hora."
-                );
-
-                seleccionar("#hora").focus();
-                return;
-            }
+            const reservasActuales = obtenerReservas();
 
             guardarReservas([
                 nuevaReserva,
                 ...reservasActuales
             ]);
 
-            localStorage.removeItem(
-                "tutouvg_fecha"
-            );
-
-            localStorage.removeItem(
-                "tutouvg_hora"
-            );
+            localStorage.removeItem("tutouvg_fecha");
+            localStorage.removeItem("tutouvg_hora");
 
             location.href = "confirmacion.html";
+        } catch (error) {
+            alert(error.message);
+
+            botonConfirmar.disabled = false;
+            botonConfirmar.textContent =
+                "Confirmar solicitud";
         }
-    );
+    });
 }
 
 function crearFilaHistorial(reserva) {
