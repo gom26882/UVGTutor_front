@@ -35,6 +35,15 @@ const seleccionar = (selector, contexto = document) => {
     return contexto.querySelector(selector);
 };
 
+function escaparHTML(valor) {
+    return String(valor === undefined || valor === null ? "" : valor)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
 function obtenerReservas() {
     const reservasGuardadas = localStorage.getItem("tutouvg_reservas") || "[]";
     return JSON.parse(reservasGuardadas);
@@ -71,31 +80,108 @@ function marcarEnlaceActivo() {
     }
 }
 
+
+const RUTA_LISTAR_TUTORES = "/tutor/getAllTutores";
+
+let tutoresDB = [];
+
+function convertirALista(valor) {
+    if (Array.isArray(valor)) return valor;
+    if (valor === undefined || valor === null || valor === "") return [];
+    return [valor];
+}
+
+function normalizarTutorDesdeAPI(tutorOriginal, indice) {
+    const tutor = tutorOriginal || {};
+    const usuario = tutor.usuario || tutor.user || {};
+    const perfil = tutor.perfil || tutor.profile || {};
+    const nombre = tutor.nombre || tutor.name || usuario.nombre || usuario.name
+        || perfil.nombre || perfil.name || "Tutor";
+    const cursos = convertirALista(
+        tutor.cursos || tutor.materias || tutor.courses || perfil.cursos || perfil.courses
+    ).map((valor) => typeof valor === "string" ? valor : (valor.nombre || valor.name || ""))
+        .filter(Boolean);
+    const modalidad = convertirALista(
+        tutor.modalidad || tutor.modalidades || tutor.modality || perfil.modalidad
+    ).map((valor) => typeof valor === "string" ? valor : (valor.nombre || valor.name || ""))
+        .filter(Boolean);
+    const precioBruto = tutor.precio ?? tutor.precioHora ?? tutor.price
+        ?? tutor.pricePerHour ?? perfil.precio ?? perfil.precioHora;
+    const precio = Number(precioBruto);
+    const ratingBruto = tutor.rating ?? tutor.calificacion ?? tutor.promedioCalificacion;
+    const rating = Number(ratingBruto);
+    const iniciales = nombre.trim().split(/\s+/).slice(0, 2)
+        .map((parte) => parte.charAt(0).toUpperCase()).join("") || "T";
+
+    return {
+        id: tutor.id ?? tutor._id ?? tutor.usuarioId ?? usuario.id ?? usuario._id ?? indice,
+        nombre,
+        iniciales: tutor.iniciales || iniciales,
+        cursos,
+        modalidad,
+        experiencia: tutor.experiencia || tutor.experience || perfil.experiencia || "",
+        precio: Number.isFinite(precio) && precio >= 0 ? precio : null,
+        rating: Number.isFinite(rating) && rating > 0 ? rating : null,
+        color: indice % 2 === 1 ? "alternativo" : ""
+    };
+}
+
+function extraerTutoresDeRespuesta(respuesta) {
+    if (Array.isArray(respuesta)) return respuesta;
+    if (!respuesta || typeof respuesta !== "object") return [];
+
+    const posiblesListas = [
+        respuesta.tutores,
+        respuesta.data,
+        respuesta.resultados,
+        respuesta.results,
+        respuesta.usuarios
+    ];
+
+    for (const lista of posiblesListas) {
+        if (Array.isArray(lista)) return lista;
+        if (lista && typeof lista === "object") {
+            for (const clave of ["tutores", "items", "results", "data"]) {
+                if (Array.isArray(lista[clave])) return lista[clave];
+            }
+        }
+    }
+
+    return [];
+}
+
 function crearTarjetaTutor(tutor) {
     const etiquetasCursos = tutor.cursos
-        .map((curso) => `<span class="etiqueta">${curso}</span>`)
+        .map((curso) => `<span class="etiqueta">${escaparHTML(curso)}</span>`)
         .join("");
-
     const etiquetasModalidad = tutor.modalidad
-        .map((modalidad) => {
-            return `<span class="etiqueta modalidad">${modalidad}</span>`;
-        })
+        .map((valor) => `<span class="etiqueta modalidad">${escaparHTML(valor)}</span>`)
         .join("");
+    const experiencia = tutor.experiencia
+        ? `<p class="subtitulo">${escaparHTML(tutor.experiencia)}</p>`
+        : "";
+    const calificacion = tutor.rating === null
+        ? "Sin calificación"
+        : `${escaparHTML(tutor.rating)} de 5`;
+    const precio = tutor.precio === null
+        ? "Precio no indicado"
+        : `Q${escaparHTML(tutor.precio)}/h`;
 
     return `
         <article class="tarjeta tarjeta-tutor">
-            <div class="avatar ${tutor.color}">${tutor.iniciales}</div>
+            <div class="avatar ${tutor.color}">${escaparHTML(tutor.iniciales)}</div>
             <div>
-                <h3>${tutor.nombre}</h3>
+                <h3>${escaparHTML(tutor.nombre)}</h3>
                 <div class="etiquetas">
                     ${etiquetasCursos}
                     ${etiquetasModalidad}
                 </div>
-                <span class="calificacion">${tutor.rating} de 5</span>
+                ${experiencia}
+                <span class="calificacion">${calificacion}</span>
             </div>
             <div>
-                <div class="precio">Q${tutor.precio}/h</div>
-                <a class="boton pequeno" href="perfil_tutor.html?id=${tutor.id}">
+                <div class="precio">${precio}</div>
+                <a class="boton pequeno" href="perfil_tutor.html?id=${encodeURIComponent(tutor.id)}">
                     Ver perfil
                 </a>
             </div>
@@ -106,34 +192,27 @@ function crearTarjetaTutor(tutor) {
 function iniciarBusqueda() {
     const lista = seleccionar("#lista-tutores");
 
-    if (!lista) {
-        return;
-    }
+    if (!lista) return;
 
     const texto = seleccionar("#busqueda");
     const curso = seleccionar("#curso");
     const modalidad = seleccionar("#modalidad");
     const precio = seleccionar("#precio");
     const precioMostrado = seleccionar("#precio-valor");
+    const contador = seleccionar("#contador");
 
     function filtrarTutores() {
         const busqueda = texto.value.trim().toLowerCase();
-        precioMostrado.textContent = `Q${precio.value}`;
+        if (precioMostrado) precioMostrado.textContent = `Q${precio.value}`;
 
-        const tutoresFiltrados = tutores.filter((tutor) => {
-            const coincideTexto = !busqueda
-                || `${tutor.nombre} ${tutor.cursos.join(" ")}`
-                    .toLowerCase()
-                    .includes(busqueda);
+        const tutoresFiltrados = tutoresDB.filter((tutor) => {
+            const textoTutor = `${tutor.nombre} ${tutor.cursos.join(" ")} ${tutor.experiencia}`.toLowerCase();
+            const coincideTexto = !busqueda || textoTutor.includes(busqueda);
             const coincideCurso = !curso.value || tutor.cursos.includes(curso.value);
-            const coincideModalidad = !modalidad.value
-                || tutor.modalidad.includes(modalidad.value);
-            const coincidePrecio = tutor.precio <= Number(precio.value);
+            const coincideModalidad = !modalidad.value || tutor.modalidad.includes(modalidad.value);
+            const coincidePrecio = tutor.precio === null || tutor.precio <= Number(precio.value);
 
-            return coincideTexto
-                && coincideCurso
-                && coincideModalidad
-                && coincidePrecio;
+            return coincideTexto && coincideCurso && coincideModalidad && coincidePrecio;
         });
 
         if (tutoresFiltrados.length > 0) {
@@ -147,16 +226,18 @@ function iniciarBusqueda() {
         }
 
         const palabraTutor = tutoresFiltrados.length === 1 ? "tutor" : "tutores";
-        seleccionar("#contador").textContent = `${tutoresFiltrados.length} ${palabraTutor}`;
+        if (contador) contador.textContent = `${tutoresFiltrados.length} ${palabraTutor}`;
     }
 
-    [texto, curso, modalidad, precio].forEach((control) => {
+    [texto, curso, modalidad, precio].filter(Boolean).forEach((control) => {
         control.addEventListener("input", filtrarTutores);
     });
 
-    seleccionar("#btn-buscar").addEventListener("click", filtrarTutores);
+    const botonBuscar = seleccionar("#btn-buscar");
+    if (botonBuscar) botonBuscar.addEventListener("click", filtrarTutores);
 
-    seleccionar("#btn-limpiar").addEventListener("click", () => {
+    const botonLimpiar = seleccionar("#btn-limpiar");
+    if (botonLimpiar) botonLimpiar.addEventListener("click", () => {
         texto.value = "";
         curso.value = "";
         modalidad.value = "";
@@ -164,7 +245,19 @@ function iniciarBusqueda() {
         filtrarTutores();
     });
 
-    filtrarTutores();
+    lista.innerHTML = '<div class="vacio">Cargando tutores...</div>';
+    if (contador) contador.textContent = "";
+
+    apiRequest(RUTA_LISTAR_TUTORES)
+        .then((respuesta) => {
+            const listaRecibida = extraerTutoresDeRespuesta(respuesta);
+            tutoresDB = listaRecibida.map(normalizarTutorDesdeAPI);
+            filtrarTutores();
+        })
+        .catch((error) => {
+            lista.innerHTML = `<div class="vacio">No se pudieron cargar los tutores desde el back. Revisa que esté encendido y que exista GET ${escaparHTML(RUTA_LISTAR_TUTORES)}. Detalle: ${escaparHTML(error.message)}</div>`;
+            if (contador) contador.textContent = "";
+        });
 }
 
 function obtenerTutorActual() {
@@ -221,6 +314,10 @@ function configurarEnterParaAvanzar(formulario) {
         "keydown",
         function (evento) {
             if (evento.key !== "Enter") {
+                return;
+            }
+
+            if (evento.target.tagName === "TEXTAREA") {
                 return;
             }
 
@@ -505,6 +602,29 @@ function iniciarReserva() {
             const reservasActuales =
                 obtenerReservas();
 
+            const horarioOcupado = reservasActuales.some(
+                function (reservaExistente) {
+                    return (
+                        reservaExistente.tutor === tutor.nombre
+                        && reservaExistente.fecha === fecha
+                        && reservaExistente.hora === hora
+                        && (
+                            reservaExistente.estado === "Pendiente"
+                            || reservaExistente.estado === "Confirmada"
+                        )
+                    );
+                }
+            );
+
+            if (horarioOcupado) {
+                alert(
+                    "Ese tutor ya tiene una tutoría en ese horario. Elige otra fecha u hora."
+                );
+
+                seleccionar("#hora").focus();
+                return;
+            }
+
             guardarReservas([
                 nuevaReserva,
                 ...reservasActuales
@@ -532,20 +652,34 @@ function crearFilaHistorial(reserva) {
         ? `<button class="boton peligro pequeno" data-cancelar-reserva="${reserva.id}">Cancelar tutoría</button>`
         : "Sin acciones";
 
+    let detalleRechazo = "";
+
+    if (reserva.estado === "Rechazada" && reserva.motivoRechazo) {
+        detalleRechazo = `
+            <br>
+            <small>
+                <strong>Motivo:</strong> ${escaparHTML(reserva.motivoRechazo)}
+                <br>
+                <strong>Mensaje del tutor:</strong> ${escaparHTML(reserva.mensajeRechazo)}
+            </small>
+        `;
+    }
+
     return `
         <tr>
-            <td>${reserva.tutor}</td>
-            <td>${reserva.curso}</td>
+            <td>${escaparHTML(reserva.tutor)}</td>
+            <td>${escaparHTML(reserva.curso)}</td>
             <td>
-                ${reserva.fecha}
+                ${escaparHTML(reserva.fecha)}
                 <br>
-                <small>${reserva.hora}</small>
+                <small>${escaparHTML(reserva.hora)}</small>
             </td>
-            <td>${reserva.modalidad}</td>
+            <td>${escaparHTML(reserva.modalidad)}</td>
             <td>
                 <span class="estado ${reserva.estado.toLowerCase()}">
                     ${reserva.estado}
                 </span>
+                ${detalleRechazo}
             </td>
             <td>${accion}</td>
         </tr>
@@ -654,11 +788,11 @@ function iniciarHistorial() {
         mensajeError.textContent = "";
 
         resumenCancelacion.innerHTML = `
-            <strong>${reserva.curso}</strong>
+            <strong>${escaparHTML(reserva.curso)}</strong>
             <span>
-                ${reserva.fecha} a las
-                ${reserva.hora} con
-                ${reserva.tutor}
+                ${escaparHTML(reserva.fecha)} a las
+                ${escaparHTML(reserva.hora)} con
+                ${escaparHTML(reserva.tutor)}
             </span>
         `;
 
@@ -884,10 +1018,10 @@ function crearAccionesSolicitud(reserva) {
 function crearFilaSolicitud(reserva) {
     return `
         <tr>
-            <td>${reserva.estudiante || "Estudiante UVG"}</td>
-            <td>${reserva.curso}</td>
-            <td>${reserva.fecha}<br><small>${reserva.hora}</small></td>
-            <td>${reserva.modalidad}</td>
+            <td>${escaparHTML(reserva.estudiante || "Estudiante UVG")}</td>
+            <td>${escaparHTML(reserva.curso)}</td>
+            <td>${escaparHTML(reserva.fecha)}<br><small>${escaparHTML(reserva.hora)}</small></td>
+            <td>${escaparHTML(reserva.modalidad)}</td>
             <td>
                 <span class="estado ${reserva.estado.toLowerCase()}">
                     ${reserva.estado}
@@ -918,6 +1052,15 @@ function iniciarPanel() {
         solicitudes = obtenerSolicitudesDeEjemplo();
     }
 
+    const modalRechazo = seleccionar("#modal-rechazo");
+    const formularioRechazo = seleccionar("#form-rechazo");
+    const motivoRechazo = seleccionar("#motivo-rechazo");
+    const mensajeRechazo = seleccionar("#mensaje-rechazo");
+    const resumenRechazo = seleccionar("#resumen-rechazo");
+    const mensajeErrorRechazo = seleccionar("#mensaje-error-rechazo");
+
+    let idSolicitudRechazo = null;
+
     function mostrarSolicitudes() {
         cuerpoTabla.innerHTML = solicitudes.map(crearFilaSolicitud).join("");
 
@@ -933,93 +1076,202 @@ function iniciarPanel() {
         seleccionar("#confirmadas").textContent = confirmadas;
     }
 
-    cuerpoTabla.addEventListener(
-    "click",
-    function (evento) {
-        const botonVerCancelacion =
-            evento.target.closest(
-                "button[data-ver-cancelacion]"
-            );
+    function aplicarEstado(idSolicitud, nuevoEstado, datosExtra) {
+        const extra = datosExtra || {};
 
-        if (botonVerCancelacion) {
-            const idCancelacion = Number(
-                botonVerCancelacion.dataset.id
-            );
-
-            const reservaCancelada =
-                solicitudes.find(
-                    function (elemento) {
-                        return (
-                            elemento.id
-                            === idCancelacion
-                        );
-                    }
-                );
-
-            if (reservaCancelada) {
-                alert(
-                    "Razón: "
-                    + reservaCancelada
-                        .motivoCancelacion
-                    + "\n\nMensaje del estudiante:\n"
-                    + reservaCancelada
-                        .mensajeCancelacion
-                );
-            }
-
-            return;
-        }
-
-        const boton = evento.target.closest(
-            "button[data-id]"
-        );
-
-        if (!boton) {
-            return;
-        }
-
-        const idSolicitud = Number(
-            boton.dataset.id
-        );
-
-        const solicitud = solicitudes.find(
-            function (elemento) {
-                return (
-                    elemento.id === idSolicitud
-                );
-            }
-        );
+        const solicitud = solicitudes.find(function (elemento) {
+            return elemento.id === idSolicitud;
+        });
 
         if (solicitud) {
-            solicitud.estado =
-                boton.dataset.accion;
+            solicitud.estado = nuevoEstado;
+            Object.assign(solicitud, extra);
         }
 
-        const reservasGuardadas =
-            obtenerReservas();
+        const reservasGuardadas = obtenerReservas();
 
-        const reservaOriginal =
-            reservasGuardadas.find(
-                function (elemento) {
-                    return (
-                        elemento.id
-                        === idSolicitud
-                    );
-                }
-            );
+        const reservaOriginal = reservasGuardadas.find(function (elemento) {
+            return elemento.id === idSolicitud;
+        });
 
         if (reservaOriginal) {
-            reservaOriginal.estado =
-                boton.dataset.accion;
-
-            guardarReservas(
-                reservasGuardadas
-            );
+            reservaOriginal.estado = nuevoEstado;
+            Object.assign(reservaOriginal, extra);
+            guardarReservas(reservasGuardadas);
         }
 
         mostrarSolicitudes();
     }
-);
+
+    function abrirModalRechazo(solicitud) {
+        idSolicitudRechazo = solicitud.id;
+
+        motivoRechazo.value = "";
+
+        mensajeRechazo.value =
+            "Hola " + (solicitud.estudiante || "estudiante")
+            + ", lamentablemente no podré realizar esta tutoría. "
+            + "Te invito a solicitar otro horario.";
+
+        mensajeErrorRechazo.textContent = "";
+
+        resumenRechazo.innerHTML = `
+            <strong>${escaparHTML(solicitud.curso)}</strong>
+            <span>
+                ${escaparHTML(solicitud.fecha)} a las
+                ${escaparHTML(solicitud.hora)} con
+                ${escaparHTML(solicitud.estudiante || "Estudiante UVG")}
+            </span>
+        `;
+
+        modalRechazo.hidden = false;
+        document.body.classList.add("sin-scroll");
+        motivoRechazo.focus();
+    }
+
+    function cerrarModalRechazo() {
+        modalRechazo.hidden = true;
+        document.body.classList.remove("sin-scroll");
+        formularioRechazo.reset();
+        mensajeErrorRechazo.textContent = "";
+        idSolicitudRechazo = null;
+    }
+
+    cuerpoTabla.addEventListener(
+        "click",
+        function (evento) {
+            const botonVerCancelacion =
+                evento.target.closest(
+                    "button[data-ver-cancelacion]"
+                );
+
+            if (botonVerCancelacion) {
+                const idCancelacion = Number(
+                    botonVerCancelacion.dataset.id
+                );
+
+                const reservaCancelada =
+                    solicitudes.find(
+                        function (elemento) {
+                            return (
+                                elemento.id
+                                === idCancelacion
+                            );
+                        }
+                    );
+
+                if (reservaCancelada) {
+                    alert(
+                        "Razón: "
+                        + reservaCancelada
+                            .motivoCancelacion
+                        + "\n\nMensaje del estudiante:\n"
+                        + reservaCancelada
+                            .mensajeCancelacion
+                    );
+                }
+
+                return;
+            }
+
+            const boton = evento.target.closest(
+                "button[data-id]"
+            );
+
+            if (!boton) {
+                return;
+            }
+
+            const idSolicitud = Number(
+                boton.dataset.id
+            );
+
+            const accion = boton.dataset.accion;
+
+            if (accion === "Rechazada" && modalRechazo) {
+                const solicitudARechazar = solicitudes.find(
+                    function (elemento) {
+                        return elemento.id === idSolicitud;
+                    }
+                );
+
+                if (solicitudARechazar) {
+                    abrirModalRechazo(solicitudARechazar);
+                }
+
+                return;
+            }
+
+            aplicarEstado(idSolicitud, accion);
+        }
+    );
+
+    if (modalRechazo) {
+        formularioRechazo.addEventListener(
+            "submit",
+            function (evento) {
+                evento.preventDefault();
+
+                const motivo = motivoRechazo.value;
+                const mensaje = mensajeRechazo.value.trim();
+
+                if (!motivo) {
+                    mensajeErrorRechazo.textContent =
+                        "Selecciona una razón para rechazar.";
+                    motivoRechazo.focus();
+                    return;
+                }
+
+                if (mensaje.length < 10) {
+                    mensajeErrorRechazo.textContent =
+                        "Escribe un mensaje de al menos 10 caracteres.";
+                    mensajeRechazo.focus();
+                    return;
+                }
+
+                aplicarEstado(idSolicitudRechazo, "Rechazada", {
+                    motivoRechazo: motivo,
+                    mensajeRechazo: mensaje,
+                    fechaRechazo: new Date().toISOString()
+                });
+
+                cerrarModalRechazo();
+            }
+        );
+
+        seleccionar("#cerrar-rechazo").addEventListener(
+            "click",
+            cerrarModalRechazo
+        );
+
+        seleccionar("#conservar-solicitud").addEventListener(
+            "click",
+            cerrarModalRechazo
+        );
+
+        modalRechazo.addEventListener(
+            "click",
+            function (evento) {
+                if (evento.target === modalRechazo) {
+                    cerrarModalRechazo();
+                }
+            }
+        );
+
+        document.addEventListener(
+            "keydown",
+            function (evento) {
+                if (
+                    evento.key === "Escape"
+                    && !modalRechazo.hidden
+                ) {
+                    cerrarModalRechazo();
+                }
+            }
+        );
+    }
+
+    mostrarSolicitudes();
 }
 
 document.addEventListener("DOMContentLoaded", () => {

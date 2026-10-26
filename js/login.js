@@ -1,4 +1,3 @@
-
 const formularioLogin = document.getElementById('form-login')
 const formularioRegistro = document.getElementById('form-registro')
 
@@ -53,30 +52,64 @@ formularioLogin.addEventListener('submit', async function(evento) {
     try {
         const data = await apiRequest('/auth/login', {
             method: 'POST',
-            body: JSON.stringify({correo, contrasena})
+            body: JSON.stringify({ correo, contrasena })
         })
 
-        const usuario = data.usuario
-        const rol = usuario.tipoUsuario.toLowerCase()
+        const usuario =
+            data?.usuario ??
+            data?.user ??
+            data?.data?.usuario ??
+            data?.data?.user
 
-        if (!['estudiante', 'tutor'].includes(rol) || !data.token) {
-            throw new Error('La respuesta del servidor no es válida')
+        if (!usuario) {
+            throw new Error('La respuesta de la API no incluye los datos del usuario.')
+        }
+
+        const rolRecibido =
+            usuario.tipoUsuario ??
+            usuario.tipo_usuario ??
+            usuario.rol ??
+            usuario.role ??
+            usuario.tipo
+
+        const rol = typeof rolRecibido === 'string'
+            ? rolRecibido.trim().toLowerCase()
+            : ''
+
+        const token =
+            data?.token ??
+            data?.accessToken ??
+            data?.access_token ??
+            data?.data?.token
+
+        if (!['estudiante', 'tutor'].includes(rol) || !token) {
+            throw new Error(
+                'La respuesta de la API debe incluir un token y el rol del usuario.'
+            )
         }
 
         const sesion = {
-            id: usuario.id,
-            nombre: usuario.nombre,
-            correo: usuario.correo,
+            id: usuario.id ?? usuario._id,
+            nombre: usuario.nombre ?? usuario.name,
+            correo: usuario.correo ?? usuario.email,
             rol,
             fechaInicioSesion: new Date().toISOString()
         }
 
-        localStorage.setItem('token', data.token)
+        if (!sesion.nombre || !sesion.correo) {
+            throw new Error('La respuesta de la API no incluye el nombre o correo del usuario.')
+        }
+
+        localStorage.setItem('token', token)
         localStorage.setItem('usuario', JSON.stringify(sesion))
 
         window.location.replace('index.html')
     } catch (err) {
-        mostrarMensaje(mensajeLogin, err.message || 'Error al iniciar sesión', 'error')
+        mostrarMensaje(
+            mensajeLogin,
+            err.message || 'Error al iniciar sesión',
+            'error'
+        )
     } finally {
         boton.disabled = false
         boton.textContent = 'Iniciar sesión'
@@ -91,7 +124,14 @@ formularioRegistro.addEventListener('submit', async function(evento) {
     const correo = inputCorreoRegistro.value.trim().toLowerCase()
     const contrasena = inputContrasenaRegistro.value
     const confirmarContrasena = inputConfirmarRegistro.value
-    const rol = document.querySelector('input[name="rol-registro"]:checked').value
+    const opcionRol = document.querySelector('input[name="rol-registro"]:checked')
+
+    if (!opcionRol) {
+        mostrarMensaje(mensajeRegistro, 'Selecciona si quieres registrarte como estudiante o tutor.', 'error')
+        return
+    }
+
+    const rol = opcionRol.value
 
     if (nombre.length < 3) {
         mostrarMensaje(mensajeRegistro, 'Escribe tu nombre completo.', 'error')
@@ -135,7 +175,12 @@ formularioRegistro.addEventListener('submit', async function(evento) {
             body: JSON.stringify(nuevoUsuario)
         })
 
-        mostrarMensaje(mensajeRegistro, 'Cuenta creada correctamente. Ahora inicia sesión.', 'exito')
+        mostrarMensaje(
+            mensajeRegistro,
+            'Cuenta creada correctamente. Ahora inicia sesión.',
+            'exito'
+        )
+
         formularioRegistro.reset()
         actualizarRequisitosContrasena('')
         actualizarCoincidenciaContrasenas()
@@ -147,7 +192,11 @@ formularioRegistro.addEventListener('submit', async function(evento) {
             inputContrasena.focus()
         }, 1200)
     } catch (err) {
-        mostrarMensaje(mensajeRegistro, err.message || 'Error al registrar usuario', 'error')
+        mostrarMensaje(
+            mensajeRegistro,
+            err.message || 'Error al registrar usuario',
+            'error'
+        )
     } finally {
         boton.disabled = false
         boton.textContent = 'Crear cuenta'
@@ -155,7 +204,10 @@ formularioRegistro.addEventListener('submit', async function(evento) {
 })
 
 function configurarCamposRegistro() {
-    const rol = document.querySelector('input[name="rol-registro"]:checked').value
+    const opcionRol = document.querySelector('input[name="rol-registro"]:checked')
+    if (!opcionRol) return
+
+    const rol = opcionRol.value
     const camposEstudiante = document.getElementById('campos-estudiante')
     const camposTutor = document.getElementById('campos-tutor')
 
@@ -207,14 +259,19 @@ function mostrarFormulario(formularioActivo) {
     limpiarMensaje(mensajeLogin)
     limpiarMensaje(mensajeRegistro)
 
-    if (mostrarLogin) inputCorreo.focus()
-    else inputNombreRegistro.focus()
+    if (mostrarLogin) {
+        inputCorreo.focus()
+    } else {
+        inputNombreRegistro.focus()
+    }
 }
 
 function configurarBotonesVisibilidad() {
     document.querySelectorAll('[data-mostrar-contrasena]').forEach(boton => {
         boton.addEventListener('click', function() {
             const input = document.getElementById(boton.dataset.mostrarContrasena)
+            if (!input) return
+
             const oculta = input.type === 'password'
             input.type = oculta ? 'text' : 'password'
             boton.textContent = oculta ? 'Ocultar' : 'Mostrar'
@@ -248,7 +305,10 @@ function actualizarRequisitosContrasena(contrasena) {
     const requisitos = evaluarContrasena(contrasena)
 
     Object.keys(requisitosVisuales).forEach(nombre => {
-        requisitosVisuales[nombre].classList.toggle('cumplido', requisitos[nombre])
+        const elemento = requisitosVisuales[nombre]
+        if (elemento) {
+            elemento.classList.toggle('cumplido', requisitos[nombre])
+        }
     })
 }
 
@@ -264,7 +324,9 @@ function actualizarCoincidenciaContrasenas() {
     }
 
     const coincide = contrasena === confirmacion
-    estadoConfirmacion.textContent = coincide ? 'Las contraseñas coinciden.' : 'Las contraseñas no coinciden.'
+    estadoConfirmacion.textContent = coincide
+        ? 'Las contraseñas coinciden.'
+        : 'Las contraseñas no coinciden.'
     estadoConfirmacion.classList.add(coincide ? 'coincide' : 'no-coincide')
 }
 
@@ -294,7 +356,11 @@ function comprobarSesionExistente() {
 
     try {
         const usuario = JSON.parse(usuarioTexto)
-        if (!['estudiante', 'tutor'].includes(usuario.rol)) throw new Error('Sesión inválida')
+
+        if (!usuario || !['estudiante', 'tutor'].includes(usuario.rol)) {
+            throw new Error('Sesión inválida')
+        }
+
         window.location.replace('index.html')
     } catch (err) {
         cerrarSesionLocal()
