@@ -80,31 +80,108 @@ function marcarEnlaceActivo() {
     }
 }
 
+
+const RUTA_LISTAR_TUTORES = "/tutor/getAllTutores";
+
+let tutoresDB = [];
+
+function convertirALista(valor) {
+    if (Array.isArray(valor)) return valor;
+    if (valor === undefined || valor === null || valor === "") return [];
+    return [valor];
+}
+
+function normalizarTutorDesdeAPI(tutorOriginal, indice) {
+    const tutor = tutorOriginal || {};
+    const usuario = tutor.usuario || tutor.user || {};
+    const perfil = tutor.perfil || tutor.profile || {};
+    const nombre = tutor.nombre || tutor.name || usuario.nombre || usuario.name
+        || perfil.nombre || perfil.name || "Tutor";
+    const cursos = convertirALista(
+        tutor.cursos || tutor.materias || tutor.courses || perfil.cursos || perfil.courses
+    ).map((valor) => typeof valor === "string" ? valor : (valor.nombre || valor.name || ""))
+        .filter(Boolean);
+    const modalidad = convertirALista(
+        tutor.modalidad || tutor.modalidades || tutor.modality || perfil.modalidad
+    ).map((valor) => typeof valor === "string" ? valor : (valor.nombre || valor.name || ""))
+        .filter(Boolean);
+    const precioBruto = tutor.precio ?? tutor.precioHora ?? tutor.price
+        ?? tutor.pricePerHour ?? perfil.precio ?? perfil.precioHora;
+    const precio = Number(precioBruto);
+    const ratingBruto = tutor.rating ?? tutor.calificacion ?? tutor.promedioCalificacion;
+    const rating = Number(ratingBruto);
+    const iniciales = nombre.trim().split(/\s+/).slice(0, 2)
+        .map((parte) => parte.charAt(0).toUpperCase()).join("") || "T";
+
+    return {
+        id: tutor.id ?? tutor._id ?? tutor.usuarioId ?? usuario.id ?? usuario._id ?? indice,
+        nombre,
+        iniciales: tutor.iniciales || iniciales,
+        cursos,
+        modalidad,
+        experiencia: tutor.experiencia || tutor.experience || perfil.experiencia || "",
+        precio: Number.isFinite(precio) && precio >= 0 ? precio : null,
+        rating: Number.isFinite(rating) && rating > 0 ? rating : null,
+        color: indice % 2 === 1 ? "alternativo" : ""
+    };
+}
+
+function extraerTutoresDeRespuesta(respuesta) {
+    if (Array.isArray(respuesta)) return respuesta;
+    if (!respuesta || typeof respuesta !== "object") return [];
+
+    const posiblesListas = [
+        respuesta.tutores,
+        respuesta.data,
+        respuesta.resultados,
+        respuesta.results,
+        respuesta.usuarios
+    ];
+
+    for (const lista of posiblesListas) {
+        if (Array.isArray(lista)) return lista;
+        if (lista && typeof lista === "object") {
+            for (const clave of ["tutores", "items", "results", "data"]) {
+                if (Array.isArray(lista[clave])) return lista[clave];
+            }
+        }
+    }
+
+    return [];
+}
+
 function crearTarjetaTutor(tutor) {
     const etiquetasCursos = tutor.cursos
-        .map((curso) => `<span class="etiqueta">${curso}</span>`)
+        .map((curso) => `<span class="etiqueta">${escaparHTML(curso)}</span>`)
         .join("");
-
     const etiquetasModalidad = tutor.modalidad
-        .map((modalidad) => {
-            return `<span class="etiqueta modalidad">${modalidad}</span>`;
-        })
+        .map((valor) => `<span class="etiqueta modalidad">${escaparHTML(valor)}</span>`)
         .join("");
+    const experiencia = tutor.experiencia
+        ? `<p class="subtitulo">${escaparHTML(tutor.experiencia)}</p>`
+        : "";
+    const calificacion = tutor.rating === null
+        ? "Sin calificación"
+        : `${escaparHTML(tutor.rating)} de 5`;
+    const precio = tutor.precio === null
+        ? "Precio no indicado"
+        : `Q${escaparHTML(tutor.precio)}/h`;
 
     return `
         <article class="tarjeta tarjeta-tutor">
-            <div class="avatar ${tutor.color}">${tutor.iniciales}</div>
+            <div class="avatar ${tutor.color}">${escaparHTML(tutor.iniciales)}</div>
             <div>
-                <h3>${tutor.nombre}</h3>
+                <h3>${escaparHTML(tutor.nombre)}</h3>
                 <div class="etiquetas">
                     ${etiquetasCursos}
                     ${etiquetasModalidad}
                 </div>
-                <span class="calificacion">${tutor.rating} de 5</span>
+                ${experiencia}
+                <span class="calificacion">${calificacion}</span>
             </div>
             <div>
-                <div class="precio">Q${tutor.precio}/h</div>
-                <a class="boton pequeno" href="perfil_tutor.html?id=${tutor.id}">
+                <div class="precio">${precio}</div>
+                <a class="boton pequeno" href="perfil_tutor.html?id=${encodeURIComponent(tutor.id)}">
                     Ver perfil
                 </a>
             </div>
@@ -115,34 +192,27 @@ function crearTarjetaTutor(tutor) {
 function iniciarBusqueda() {
     const lista = seleccionar("#lista-tutores");
 
-    if (!lista) {
-        return;
-    }
+    if (!lista) return;
 
     const texto = seleccionar("#busqueda");
     const curso = seleccionar("#curso");
     const modalidad = seleccionar("#modalidad");
     const precio = seleccionar("#precio");
     const precioMostrado = seleccionar("#precio-valor");
+    const contador = seleccionar("#contador");
 
     function filtrarTutores() {
         const busqueda = texto.value.trim().toLowerCase();
-        precioMostrado.textContent = `Q${precio.value}`;
+        if (precioMostrado) precioMostrado.textContent = `Q${precio.value}`;
 
-        const tutoresFiltrados = tutores.filter((tutor) => {
-            const coincideTexto = !busqueda
-                || `${tutor.nombre} ${tutor.cursos.join(" ")}`
-                    .toLowerCase()
-                    .includes(busqueda);
+        const tutoresFiltrados = tutoresDB.filter((tutor) => {
+            const textoTutor = `${tutor.nombre} ${tutor.cursos.join(" ")} ${tutor.experiencia}`.toLowerCase();
+            const coincideTexto = !busqueda || textoTutor.includes(busqueda);
             const coincideCurso = !curso.value || tutor.cursos.includes(curso.value);
-            const coincideModalidad = !modalidad.value
-                || tutor.modalidad.includes(modalidad.value);
-            const coincidePrecio = tutor.precio <= Number(precio.value);
+            const coincideModalidad = !modalidad.value || tutor.modalidad.includes(modalidad.value);
+            const coincidePrecio = tutor.precio === null || tutor.precio <= Number(precio.value);
 
-            return coincideTexto
-                && coincideCurso
-                && coincideModalidad
-                && coincidePrecio;
+            return coincideTexto && coincideCurso && coincideModalidad && coincidePrecio;
         });
 
         if (tutoresFiltrados.length > 0) {
@@ -156,16 +226,18 @@ function iniciarBusqueda() {
         }
 
         const palabraTutor = tutoresFiltrados.length === 1 ? "tutor" : "tutores";
-        seleccionar("#contador").textContent = `${tutoresFiltrados.length} ${palabraTutor}`;
+        if (contador) contador.textContent = `${tutoresFiltrados.length} ${palabraTutor}`;
     }
 
-    [texto, curso, modalidad, precio].forEach((control) => {
+    [texto, curso, modalidad, precio].filter(Boolean).forEach((control) => {
         control.addEventListener("input", filtrarTutores);
     });
 
-    seleccionar("#btn-buscar").addEventListener("click", filtrarTutores);
+    const botonBuscar = seleccionar("#btn-buscar");
+    if (botonBuscar) botonBuscar.addEventListener("click", filtrarTutores);
 
-    seleccionar("#btn-limpiar").addEventListener("click", () => {
+    const botonLimpiar = seleccionar("#btn-limpiar");
+    if (botonLimpiar) botonLimpiar.addEventListener("click", () => {
         texto.value = "";
         curso.value = "";
         modalidad.value = "";
@@ -173,7 +245,19 @@ function iniciarBusqueda() {
         filtrarTutores();
     });
 
-    filtrarTutores();
+    lista.innerHTML = '<div class="vacio">Cargando tutores...</div>';
+    if (contador) contador.textContent = "";
+
+    apiRequest(RUTA_LISTAR_TUTORES)
+        .then((respuesta) => {
+            const listaRecibida = extraerTutoresDeRespuesta(respuesta);
+            tutoresDB = listaRecibida.map(normalizarTutorDesdeAPI);
+            filtrarTutores();
+        })
+        .catch((error) => {
+            lista.innerHTML = `<div class="vacio">No se pudieron cargar los tutores desde el back. Revisa que esté encendido y que exista GET ${escaparHTML(RUTA_LISTAR_TUTORES)}. Detalle: ${escaparHTML(error.message)}</div>`;
+            if (contador) contador.textContent = "";
+        });
 }
 
 function obtenerTutorActual() {

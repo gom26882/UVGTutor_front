@@ -1,175 +1,98 @@
-(function () {
+
+(function() {
     const PAGINAS_ESTUDIANTE = [
-        "index.html",
-        "buscar_tutores.html",
-        "perfil_tutor.html",
-        "reservar_tutorias.html",
-        "historial.html",
-        "confirmacion.html"
-    ];
+        'index.html', 'buscar_tutores.html', 'perfil_tutor.html',
+        'reservar_tutorias.html', 'historial.html', 'confirmacion.html'
+    ]
 
     const PAGINAS_TUTOR = [
-        "panel_tutor.html",
-        "perfil_tutor.html",
-        "buscar_tutores.html"
-    ];
+        'index.html', 'panel_tutor.html', 'perfil_tutor.html',
+        'buscar_tutores.html'
+    ]
 
-    const usuario = obtenerUsuarioGuardado();
+    const usuario = obtenerUsuarioGuardado()
 
-    if (!usuario) {
-        redirigirAlLogin();
-        return;
+    if (!usuario || !tokenVigente()) {
+        cerrarSesion()
+        return
     }
 
     if (!tieneAcceso(usuario)) {
-        redirigirSegunRol(usuario.rol);
-        return;
+        window.location.replace('index.html')
+        return
     }
 
-    mostrarUsuario(usuario);
-    ocultarEnlacesNoPermitidos(usuario.rol);
-    configurarBotonCerrarSesion();
+    mostrarUsuario(usuario)
+    ocultarEnlacesNoPermitidos(usuario.rol)
+    configurarBotonCerrarSesion()
 
     function obtenerUsuarioGuardado() {
-        const usuarioGuardadoTexto = localStorage.getItem("usuario");
-
-        if (!usuarioGuardadoTexto) {
-            return null;
-        }
-
         try {
-            const usuarioGuardado = JSON.parse(usuarioGuardadoTexto);
-
-            if (
-                !usuarioGuardado
-                || !usuarioGuardado.nombre
-                || !usuarioGuardado.correo
-                || !usuarioGuardado.rol
-            ) {
-                throw new Error("La sesión está incompleta.");
-            }
-
-            if (
-                usuarioGuardado.rol !== "estudiante"
-                && usuarioGuardado.rol !== "tutor"
-            ) {
-                throw new Error("El rol del usuario no es válido.");
-            }
-
-            return usuarioGuardado;
-        } catch (error) {
-            localStorage.removeItem("usuario");
-            return null;
+            const usuario = JSON.parse(localStorage.getItem('usuario'))
+            if (!usuario || !usuario.nombre || !usuario.correo) return null
+            if (!['estudiante', 'tutor'].includes(usuario.rol)) return null
+            return usuario
+        } catch (err) {
+            return null
         }
     }
 
-    function obtenerPaginaActual() {
-        const partesRuta = window.location.pathname.split("/");
-        const paginaActual = partesRuta.pop();
-
-        return paginaActual || "index.html";
+    function tieneAcceso(usuario) {
+        const pagina = window.location.pathname.split('/').pop() || 'index.html'
+        if (usuario.rol === 'tutor') return PAGINAS_TUTOR.includes(pagina)
+        return PAGINAS_ESTUDIANTE.includes(pagina)
     }
 
-    function tieneAcceso(usuarioActual) {
-        const paginaActual = obtenerPaginaActual();
+    function mostrarUsuario(usuario) {
+        const chip = document.getElementById('usuario-chip')
+        if (!chip) return
 
-        if (usuarioActual.rol === "tutor") {
-            return PAGINAS_TUTOR.includes(paginaActual);
-        }
-
-        if (usuarioActual.rol === "estudiante") {
-            return PAGINAS_ESTUDIANTE.includes(paginaActual);
-        }
-
-        return false;
-    }
-
-    function mostrarUsuario(usuarioActual) {
-        const usuarioChip = document.getElementById("usuario-chip");
-
-        if (!usuarioChip) {
-            return;
-        }
-
-        usuarioChip.textContent = usuarioActual.nombre;
-        usuarioChip.title = usuarioActual.correo;
+        chip.textContent = usuario.nombre
+        chip.title = usuario.correo
     }
 
     function ocultarEnlacesNoPermitidos(rol) {
-        if (rol === "estudiante") {
-            ocultarElementos('a[href="panel_tutor.html"]');
+        if (rol === 'estudiante') {
+            ocultarElementos('a[href="panel_tutor.html"]')
         }
 
-        if (rol === "tutor") {
-            ocultarElementos('a[href="historial.html"]');
-            ocultarElementos('a[href^="reservar_tutorias.html"]');
-            ocultarElementos("#reservar");
+        if (rol === 'tutor') {
+            ocultarElementos('a[href="historial.html"]')
+            ocultarElementos('a[href^="reservar_tutorias.html"]')
+            ocultarElementos('#reservar')
         }
     }
 
     function ocultarElementos(selector) {
-        const elementos = document.querySelectorAll(selector);
-
-        elementos.forEach(function (elemento) {
-            elemento.style.display = "none";
-        });
+        document.querySelectorAll(selector).forEach(elemento => {
+            elemento.style.display = 'none'
+        })
     }
 
     function configurarBotonCerrarSesion() {
-        let botonCerrarSesion = document.getElementById(
-            "btn-cerrar-sesion"
-        );
+        let boton = document.getElementById('btn-cerrar-sesion')
+        if (!boton) boton = crearBotonCerrarSesion()
+        if (!boton) return
 
-        if (!botonCerrarSesion) {
-            botonCerrarSesion = crearBotonCerrarSesion();
-        }
-
-        if (!botonCerrarSesion) {
-            return;
-        }
-
-        botonCerrarSesion.addEventListener(
-            "click",
-            function () {
-                localStorage.removeItem("usuario");
-                window.location.replace("login.html");
-            }
-        );
+        boton.addEventListener('click', cerrarSesion)
     }
 
     function crearBotonCerrarSesion() {
-        const usuarioChip = document.getElementById(
-            "usuario-chip"
-        );
+        const chip = document.getElementById('usuario-chip')
+        if (!chip) return null
 
-        if (!usuarioChip) {
-            return null;
-        }
+        const boton = document.createElement('button')
+        boton.id = 'btn-cerrar-sesion'
+        boton.type = 'button'
+        boton.className = 'boton secundario pequeno'
+        boton.textContent = 'Cerrar sesión'
+        chip.insertAdjacentElement('afterend', boton)
 
-        const boton = document.createElement("button");
-
-        boton.id = "btn-cerrar-sesion";
-        boton.type = "button";
-        boton.className = "boton secundario pequeno";
-        boton.textContent = "Cerrar sesión";
-
-        usuarioChip.insertAdjacentElement(
-            "afterend",
-            boton
-        );
-
-        return boton;
+        return boton
     }
 
-    function redirigirAlLogin() {
-        window.location.replace("login.html");
+    function cerrarSesion() {
+        cerrarSesionLocal()
+        window.location.replace('login.html')
     }
-
-    function redirigirSegunRol(rol) {
-        if (rol === "tutor") {
-            window.location.replace("panel_tutor.html");
-        } else {
-            window.location.replace("index.html");
-        }
-    }
-})();
+})()

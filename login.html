@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -40,29 +41,13 @@
 
                     <div class="campo">
                         <label for="contrasena">Contraseña</label>
-
                         <div class="contenedor-contrasena">
                             <input id="contrasena" type="password" placeholder="Ingresa tu contraseña" autocomplete="current-password" required>
                             <button class="boton secundario pequeno" type="button" data-mostrar-contrasena="contrasena">Mostrar</button>
                         </div>
                     </div>
 
-                    <span class="etiqueta-campo">Quiero ingresar como</span>
-
-                    <div class="selector-rol">
-                        <label>
-                            <input type="radio" name="rol" value="estudiante" checked>
-                            Estudiante
-                        </label>
-
-                        <label>
-                            <input type="radio" name="rol" value="tutor">
-                            Tutor
-                        </label>
-                    </div>
-
                     <div id="mensaje-login" class="margen-superior"></div>
-
                     <button class="boton ancho margen-superior" type="submit">Iniciar sesión</button>
 
                     <p class="subtitulo margen-superior">
@@ -87,7 +72,6 @@
 
                     <div class="campo">
                         <label for="registro-contrasena">Contraseña</label>
-
                         <div class="contenedor-contrasena">
                             <input id="registro-contrasena" type="password" placeholder="Crea una contraseña segura" autocomplete="new-password" minlength="8" required>
                             <button class="boton secundario pequeno" type="button" data-mostrar-contrasena="registro-contrasena">Mostrar</button>
@@ -104,12 +88,10 @@
 
                     <div class="campo">
                         <label for="registro-confirmar">Confirmar contraseña</label>
-
                         <div class="contenedor-contrasena">
                             <input id="registro-confirmar" type="password" placeholder="Repite tu contraseña" autocomplete="new-password" minlength="8" required>
                             <button class="boton secundario pequeno" type="button" data-mostrar-contrasena="registro-confirmar">Mostrar</button>
                         </div>
-
                         <small id="estado-confirmacion" class="estado-confirmacion"></small>
                     </div>
 
@@ -127,8 +109,34 @@
                         </label>
                     </div>
 
-                    <div id="mensaje-registro" class="margen-superior"></div>
+                    <div id="campos-estudiante">
+                        <div class="campo">
+                            <label for="registro-carnet">Carné universitario</label>
+                            <input id="registro-carnet" type="text" placeholder="Ej. 26882" minlength="5" maxlength="5" pattern="[0-9]{5}" required>
+                        </div>
+                    </div>
 
+                    <div id="campos-tutor" hidden>
+                        <div class="campo">
+                            <label for="registro-experiencia">Experiencia</label>
+                            <input id="registro-experiencia" type="text" placeholder="Ej. Tutor de matemáticas" required>
+                        </div>
+
+                        <div class="campo">
+                            <label for="registro-precio">Precio por hora (Q)</label>
+                            <input id="registro-precio" type="number" min="0" step="0.01" placeholder="Ej. 75" required>
+                        </div>
+
+                        <div class="campo">
+                            <label for="registro-modalidad">Modalidad</label>
+                            <select id="registro-modalidad" required>
+                                <option value="PRESENCIAL">Presencial</option>
+                                <option value="VIRTUAL">Virtual</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="mensaje-registro" class="margen-superior"></div>
                     <button class="boton ancho margen-superior" type="submit">Crear cuenta</button>
 
                     <p class="subtitulo margen-superior">
@@ -140,6 +148,7 @@
         </section>
     </main>
 
+    <script src="js/api.js"></script>
     <script src="js/login.js"></script>
 </body>
 </html>
