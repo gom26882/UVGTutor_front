@@ -1,72 +1,135 @@
-
 (function() {
     const PAGINAS_ESTUDIANTE = [
         'index.html', 'buscar_tutores.html', 'perfil_tutor.html',
-        'reservar_tutorias.html', 'historial.html', 'confirmacion.html'
+        'reservar_tutorias.html', 'historial.html', 'confirmacion.html',
+        'perfil_estudiante.html'
     ]
 
     const PAGINAS_TUTOR = [
-        'index.html', 'panel_tutor.html', 'perfil_tutor.html',
-        'buscar_tutores.html'
+        'panel_tutor.html', 'gestion_tutor.html'
     ]
 
-    const usuario = obtenerUsuarioGuardado()
+    const NAVEGACION = {
+        estudiante: [
+            { href: 'index.html', texto: 'Explorar' },
+            { href: 'historial.html', texto: 'Mis tutorías' },
+            { href: 'perfil_estudiante.html', texto: 'Mi perfil' }
+        ],
+        tutor: [
+            { href: 'panel_tutor.html', texto: 'Panel' },
+            { href: 'gestion_tutor.html', texto: 'Mi perfil de tutor' }
+        ]
+    }
 
-    if (!usuario || !tokenVigente()) {
+    window.ACCESO_PERMITIDO = false
+    if (typeof obtenerSesionDesdeToken !== 'function') {
+        console.error('auth.js: falta <script src="js/api.js"></script> ANTES de auth.js en esta página')
+        document.body.insertAdjacentHTML('afterbegin',
+            '<p style="padding:16px;background:#5a1a1a;color:#fff;margin:0">' +
+            'Error de configuración: esta página no carga <b>js/api.js</b> antes de <b>js/auth.js</b>.</p>')
+        return
+    }
+    document.body.style.visibility = 'hidden'
+    setTimeout(() => { document.body.style.visibility = '' }, 1500)
+
+    const sesion = obtenerSesionDesdeToken()
+
+    if (!sesion) {
         cerrarSesion()
         return
     }
 
-    if (!tieneAcceso(usuario)) {
-        window.location.replace('index.html')
+    if (!tieneAcceso(sesion.rol)) {
+        window.location.replace(INICIO_POR_ROL[sesion.rol])
         return
     }
 
-    mostrarUsuario(usuario)
-    ocultarEnlacesNoPermitidos(usuario.rol)
+    window.ACCESO_PERMITIDO = true
+    window.SESION = sesion
+
+    construirNavegacion(sesion.rol)
+    mostrarUsuario(obtenerUsuarioCacheado())
     configurarBotonCerrarSesion()
 
-    function obtenerUsuarioGuardado() {
+    document.body.style.visibility = ''
+    window.PERFIL_USUARIO = apiRequest('/user/getUser')
+        .then(respuesta => {
+            const perfil = respuesta.usuario
+            guardarUsuarioEnCache(perfil, sesion.rol)
+            mostrarUsuario(perfil)
+            return perfil
+        })
+        .catch(err => {
+            console.error(err)
+            return obtenerUsuarioCacheado()
+        })
+
+    function paginaActual() {
+        return window.location.pathname.split('/').pop() || 'index.html'
+    }
+
+    function tieneAcceso(rol) {
+        const pagina = paginaActual()
+        if (rol === 'tutor') return PAGINAS_TUTOR.includes(pagina)
+        if (rol === 'estudiante') return PAGINAS_ESTUDIANTE.includes(pagina)
+        return false
+    }
+
+    function obtenerUsuarioCacheado() {
         try {
-            const usuario = JSON.parse(localStorage.getItem('usuario'))
-            if (!usuario || !usuario.nombre || !usuario.correo) return null
-            if (!['estudiante', 'tutor'].includes(usuario.rol)) return null
-            return usuario
+            return JSON.parse(localStorage.getItem('usuario'))
         } catch (err) {
             return null
         }
     }
 
-    function tieneAcceso(usuario) {
-        const pagina = window.location.pathname.split('/').pop() || 'index.html'
-        if (usuario.rol === 'tutor') return PAGINAS_TUTOR.includes(pagina)
-        return PAGINAS_ESTUDIANTE.includes(pagina)
+    function guardarUsuarioEnCache(perfil, rol) {
+        if (!perfil) return
+
+        localStorage.setItem('usuario', JSON.stringify({
+            id: perfil.id,
+            nombre: perfil.nombre,
+            correo: perfil.correo,
+            rol
+        }))
+    }
+
+    function construirNavegacion(rol) {
+        const encabezado = document.querySelector('.encabezado')
+        if (!encabezado) return
+
+        const marca = encabezado.querySelector('.marca')
+        if (marca) marca.setAttribute('href', INICIO_POR_ROL[rol])
+
+        let nav = encabezado.querySelector('.navegacion')
+
+        if (!nav) {
+            nav = document.createElement('nav')
+            nav.className = 'navegacion'
+            marca ? marca.insertAdjacentElement('afterend', nav) : encabezado.prepend(nav)
+        }
+
+        const pagina = paginaActual()
+
+        nav.innerHTML = NAVEGACION[rol].map(enlace => {
+            const activo = enlace.href === pagina ? ' class="activo"' : ''
+            return `<a href="${enlace.href}"${activo}>${enlace.texto}</a>`
+        }).join('')
+        if (rol === 'tutor') {
+            document.querySelectorAll('a[href^="reservar_tutorias.html"], #reservar').forEach(ocultar)
+        }
+    }
+
+    function ocultar(elemento) {
+        elemento.style.display = 'none'
     }
 
     function mostrarUsuario(usuario) {
         const chip = document.getElementById('usuario-chip')
-        if (!chip) return
+        if (!chip || !usuario) return
 
-        chip.textContent = usuario.nombre
-        chip.title = usuario.correo
-    }
-
-    function ocultarEnlacesNoPermitidos(rol) {
-        if (rol === 'estudiante') {
-            ocultarElementos('a[href="panel_tutor.html"]')
-        }
-
-        if (rol === 'tutor') {
-            ocultarElementos('a[href="historial.html"]')
-            ocultarElementos('a[href^="reservar_tutorias.html"]')
-            ocultarElementos('#reservar')
-        }
-    }
-
-    function ocultarElementos(selector) {
-        document.querySelectorAll(selector).forEach(elemento => {
-            elemento.style.display = 'none'
-        })
+        chip.textContent = usuario.nombre || (sesion.rol === 'tutor' ? 'Tutor UVG' : 'Estudiante UVG')
+        chip.title = `${usuario.correo || ''} · ${sesion.rol === 'tutor' ? 'Tutor' : 'Estudiante'}`
     }
 
     function configurarBotonCerrarSesion() {
@@ -81,12 +144,17 @@
         const chip = document.getElementById('usuario-chip')
         if (!chip) return null
 
+        const contenedor = document.createElement('div')
+        contenedor.className = 'zona-usuario'
+        chip.replaceWith(contenedor)
+        contenedor.appendChild(chip)
+
         const boton = document.createElement('button')
         boton.id = 'btn-cerrar-sesion'
         boton.type = 'button'
         boton.className = 'boton secundario pequeno'
         boton.textContent = 'Cerrar sesión'
-        chip.insertAdjacentElement('afterend', boton)
+        contenedor.appendChild(boton)
 
         return boton
     }
