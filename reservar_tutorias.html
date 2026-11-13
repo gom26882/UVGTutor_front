@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -8,13 +9,15 @@
 </head>
 <body>
     <header class="encabezado">
-        <a class="marca" href="buscar_tutores.html">
+        <a class="marca" href="index.html">
             <span class="marca-icono">UVG</span>
             <span>Tuto UVG</span>
         </a>
+
         <nav class="navegacion">
-            <a href="buscar_tutores.html">Explorar</a>
+            <a href="index.html">Explorar</a>
             <a href="historial.html">Mis tutorías</a>
+            <a href="perfil_estudiante.html">Mi perfil</a>
         </nav>
         <span class="usuario-chip" id="usuario-chip">Estudiante UVG</span>
     </header>
@@ -25,41 +28,51 @@
                 <span class="eyebrow">Último paso</span>
                 <h1>Reserva con <span id="reserva-tutor">tu tutor</span></h1>
             </div>
-            <a class="boton secundario" href="perfil_tutor.html">Volver al perfil</a>
+            <a class="boton secundario" id="volver-perfil" href="buscar_tutores.html">Volver al perfil</a>
         </div>
 
         <form class="formulario" id="form-reserva">
             <section class="panel">
                 <h2>Fecha y formato</h2>
+
                 <div class="campo">
                     <label for="fecha">Fecha</label>
                     <input id="fecha" type="date" required>
                 </div>
+
                 <div class="campo">
                     <label for="hora">Hora</label>
-                    <input id="hora" type="time" required>
+                    <select id="hora" required>
+                        <option value="">Selecciona un horario</option>
+                    </select>
                 </div>
+
                 <div class="campo">
                     <label for="modalidad">Modalidad</label>
                     <select id="modalidad" required>
-                        <option>Virtual</option>
-                        <option>Presencial</option>
+                        <option value="VIRTUAL">Virtual</option>
+                        <option value="PRESENCIAL">Presencial</option>
                     </select>
+                </div>
+
+                <div class="campo">
+                    <label for="cantidad-horas">Cantidad de horas</label>
+                    <input id="cantidad-horas" type="number" min="1" step="1" value="1" required>
+                    <small class="ayuda-campo" id="ayuda-horas"></small>
                 </div>
             </section>
 
             <section class="panel">
                 <h2>Qué necesitas trabajar</h2>
+
                 <div class="campo">
                     <label for="curso">Curso</label>
                     <select id="curso" required></select>
                 </div>
+
                 <div class="campo">
                     <label for="detalles">Detalles para el tutor</label>
-                    <textarea
-                        id="detalles"
-                        placeholder="Ej. Quiero repasar derivadas antes del parcial"
-                    ></textarea>
+                    <textarea id="detalles" placeholder="Ej. Quiero repasar derivadas antes del parcial"></textarea>
                 </div>
             </section>
 
@@ -70,9 +83,13 @@
                     <p>
                         <strong>Tutor:</strong> <span id="resumen-tutor"></span>
                         <span class="separador">|</span>
-                        <strong>Precio:</strong> <span id="resumen-precio"></span> por hora
+                        <strong>Precio por hora:</strong> <span id="resumen-precio"></span>
                     </p>
+                    <p><strong>Total estimado:</strong> <span id="resumen-total"></span></p>
                 </div>
+
+                <div id="mensaje-reserva" class="margen-superior"></div>
+
                 <div class="acciones">
                     <button class="boton" type="submit">Confirmar solicitud</button>
                     <a class="boton secundario" href="buscar_tutores.html">Cancelar</a>
@@ -80,6 +97,8 @@
             </section>
         </form>
     </main>
+
+    <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
 </body>
