@@ -335,10 +335,23 @@ function iniciarBusqueda() {
     const modalidad = seleccionar("#modalidad")
     const precio = seleccionar("#precio")
     const precioMostrado = seleccionar("#precio-valor")
+
+    function actualizarBarraPrecio() {
+        const minimo = Number(precio.min);
+        const maximo = Number(precio.max);
+        const valor = Number(precio.value);
+        const porcentaje = ((valor - minimo) / (maximo - minimo)) * 100;
+
+        precio.style.setProperty("--progreso", `${porcentaje}%`);
+
+        if (precioMostrado) {
+            precioMostrado.textContent = `Q${valor}`;
+        }
+    }
+
     const contador = seleccionar("#contador")
 
     let numeroPeticion = 0
-    let precioMaximoInicial = Number(precio.max)
 
     cargarOpcionesCursos(curso, { valor: 'nombre', textoTodos: 'Todos los cursos' })
 
@@ -384,14 +397,6 @@ function iniciarBusqueda() {
             const listaRecibida = extraerTutoresDeRespuesta(respuesta)
             tutoresDB = listaRecibida.map(normalizarTutorDesdeAPI)
 
-            const precioMasAlto = Math.max(0, ...tutoresDB.map(tutor => tutor.precio || 0))
-            const nuevoMaximo = Math.max(precioMaximoInicial, Math.ceil(precioMasAlto / 5) * 5)
-
-            if (nuevoMaximo > Number(precio.max)) {
-                const estabaEnElMaximo = Number(precio.value) === Number(precio.max)
-                precio.max = nuevoMaximo
-                if (estabaEnElMaximo) precio.value = nuevoMaximo
-            }
 
             filtrarTutores()
         } catch (err) {
@@ -405,7 +410,10 @@ function iniciarBusqueda() {
 
     texto.addEventListener("input", filtrarTutores)
     curso.addEventListener("change", filtrarTutores)
-    precio.addEventListener("input", filtrarTutores)
+    precio.addEventListener("input", () => {
+        actualizarBarraPrecio();
+        filtrarTutores();
+    });
 
     modalidad.addEventListener("change", cargarTutores)
 
@@ -416,12 +424,14 @@ function iniciarBusqueda() {
 
     if (botonLimpiar) {
         botonLimpiar.addEventListener("click", () => {
-            texto.value = ""
-            curso.value = ""
-            modalidad.value = ""
-            precio.value = precio.max
-            cargarTutores()
-        })
+            texto.value = "";
+            curso.value = "";
+            modalidad.value = "";
+            precio.value = precio.max;
+
+            actualizarBarraPrecio();
+            cargarTutores();
+        });
     }
     lista.addEventListener("click", function (evento) {
     const enlaceTutor = evento.target.closest("[data-tutor-id]");
@@ -448,6 +458,7 @@ function iniciarBusqueda() {
         );
     }
 });
+    actualizarBarraPrecio()
     cargarTutores()
 }
 
@@ -852,6 +863,9 @@ async function iniciarReserva() {
                 localStorage.removeItem('tutouvg_fecha')
                 localStorage.removeItem('tutouvg_hora')
                 localStorage.removeItem('tutouvg_horarioISO')
+                localStorage.setItem('tutouvg_confirmacion_tutor', tutor.nombre || 'tu tutor')
+
+                window.location.href = 'confirmacion.html'
 
                 window.location.href = 'confirmacion.html'
             } catch (err) {
@@ -1133,6 +1147,10 @@ function iniciarPanel() {
     const tituloModal = seleccionar("#titulo-rechazo");
     const eyebrowModal = modalRechazo.querySelector(".eyebrow");
     const botonConfirmarModal = formularioRechazo.querySelector('button[type="submit"]');
+    const modalAceptada = seleccionar("#modal-tutoria-aceptada");
+    const tituloAceptada = seleccionar("#titulo-tutoria-aceptada");
+    const detalleAceptada = seleccionar("#detalle-tutoria-aceptada");
+    const contactoAceptada = seleccionar("#contacto-tutoria-aceptada");
 
     let solicitudes = [];
     let idSeleccionada = null;
@@ -1253,6 +1271,21 @@ function iniciarPanel() {
         idSeleccionada = null;
     }
 
+    function mostrarTutoriaAceptada(solicitud) {
+        const estudiante = solicitud.estudiante || {};
+        const nombre = estudiante.nombre || "el estudiante";
+
+        tituloAceptada.textContent = `Tutoría para ${nombre} aceptada`;
+
+        detalleAceptada.textContent = `${solicitud.curso?.nombre || "Tutoría"} · ${formatearFecha(solicitud.fecha)} a las ${formatearHora(solicitud.fecha)}`;
+
+        contactoAceptada.innerHTML =
+            crearContacto(estudiante, "estudiante") ||
+            '<p class="subtitulo">El estudiante todavía no agregó un teléfono de contacto.</p>';
+
+        abrirModal(modalAceptada);
+    }
+
     cuerpoTabla.addEventListener("click", async evento => {
         const boton = evento.target.closest("button[data-id]");
         if (!boton) return;
@@ -1272,6 +1305,9 @@ function iniciarPanel() {
 
         try {
             await ejecutarAccion(solicitud._id, accion);
+            if (accion === "aceptar") {
+                mostrarTutoriaAceptada(solicitud);
+            }
             mostrarMensajeEn(
                 mensajePanel,
                 accion === "aceptar" ? "Tutoría aceptada. El horario se marcó como ocupado." : "Tutoría marcada como completada.",
@@ -1321,7 +1357,27 @@ function iniciarPanel() {
         cerrarModalMotivo
     );
 
+    configurarCierreModal(
+        modalAceptada,
+        [seleccionar("#cerrar-tutoria-aceptada")],
+        () => cerrarModal(modalAceptada)
+    );
+
     cargarSolicitudes();
+}
+
+function iniciarConfirmacion() {
+    const nombreTutor = seleccionar("#confirmacion-nombre-tutor");
+
+    if (!nombreTutor) {
+        return;
+    }
+
+    nombreTutor.textContent =
+        localStorage.getItem("tutouvg_confirmacion_tutor") ||
+        "tu tutor";
+
+    localStorage.removeItem("tutouvg_confirmacion_tutor");
 }
 
 function iniciarFormularioCuenta(perfil) {
@@ -1836,6 +1892,7 @@ document.addEventListener("DOMContentLoaded", () => {
     iniciarReserva();
     iniciarHistorial();
     iniciarPanel();
+    iniciarConfirmacion();
 
     iniciarGestionTutor();
     iniciarPerfilEstudiante();

@@ -15,6 +15,8 @@
                 <h1>Ponle precio a tu conocimiento</h1>
                 <p>Encuentra estudiantes que dominan el curso, reserva una tutoría y avanza a tu ritmo. Sin complicaciones.</p>
                 <div class="detalle-decorativo"></div>
+                <div class="figura-desenfocada figura-desenfocada-uno" aria-hidden="true"></div>
+                <div class="figura-desenfocada figura-desenfocada-dos" aria-hidden="true"></div>
             </div>
         </section>
 
@@ -62,7 +64,7 @@
 
                     <div class="campo">
                         <label for="registro-nombre">Nombre completo</label>
-                        <input id="registro-nombre" type="text" placeholder="Ej. Josué Morales" autocomplete="name" required>
+                        <input id="registro-nombre" type="text" placeholder="Ej. Josué Morales" autocomplete="off" spellcheck="false" required>
                     </div>
 
                     <div class="campo">
@@ -117,14 +119,14 @@
                     <div id="campos-estudiante">
                         <div class="campo">
                             <label for="registro-carnet">Carné universitario</label>
-                            <input id="registro-carnet" type="text" placeholder="Ej. 26882" minlength="5" maxlength="5" pattern="[0-9]{5}" required>
+                            <input id="registro-carnet" type="text" placeholder="Ej. 26882" minlength="5" maxlength="5" pattern="[0-9]{5}" autocomplete="off" spellcheck="false" required>
                         </div>
                     </div>
 
                     <div id="campos-tutor" hidden>
                         <div class="campo">
                             <label for="registro-experiencia">Experiencia</label>
-                            <input id="registro-experiencia" type="text" placeholder="Ej. Tutor de matemáticas" required>
+                            <input id="registro-experiencia" type="text" placeholder="Ej. Tutor de matemáticas" autocomplete="off" spellcheck="false" required>
                         </div>
 
                         <div class="campo">

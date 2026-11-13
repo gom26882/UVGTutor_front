@@ -100,7 +100,7 @@
                     <div class="campo">
                         <label for="mensaje-rechazo">Mensaje para el estudiante</label>
 
-                        <textarea id="mensaje-rechazo" minlength="10" maxlength="300" placeholder="Escribe un mensaje breve y respetuoso" required></textarea>
+                        <textarea id="mensaje-rechazo" minlength="10" maxlength="300" placeholder="Escribe un mensaje breve y respetuoso" autocomplete="off" spellcheck="false" required></textarea>
 
                         <small class="subtitulo">
                             Entre 10 y 300 caracteres.
@@ -114,6 +114,23 @@
                         <button class="boton secundario" id="conservar-solicitud" type="button">Volver</button>
                     </div>
                 </form>
+            </section>
+        </div>
+
+        <div class="modal-cancelacion" id="modal-tutoria-aceptada" hidden>
+            <section class="panel modal-contenido modal-exito" role="dialog" aria-modal="true" aria-labelledby="titulo-tutoria-aceptada">
+                <button class="modal-cerrar" id="cerrar-tutoria-aceptada" type="button" aria-label="Cerrar">X</button>
+
+                <div class="figura-desenfocada figura-modal-uno" aria-hidden="true"></div>
+                <div class="figura-desenfocada figura-modal-dos" aria-hidden="true"></div>
+
+                <div class="modal-exito-contenido">
+                    <span class="eyebrow">Solicitud confirmada</span>
+                    <h2 id="titulo-tutoria-aceptada">Tutoría aceptada</h2>
+                    <p class="subtitulo" id="detalle-tutoria-aceptada"></p>
+
+                    <div class="acciones acciones-centradas" id="contacto-tutoria-aceptada"></div>
+                </div>
             </section>
         </div>
     </main>
