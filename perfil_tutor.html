@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -8,15 +9,17 @@
 </head>
 <body>
     <header class="encabezado">
-        <a class="marca" href="buscar_tutores.html">
+        <a class="marca" href="index.html">
             <span class="marca-icono">UVG</span>
             <span>Tuto UVG</span>
         </a>
+
         <nav class="navegacion">
-            <a href="buscar_tutores.html">Explorar</a>
+            <a href="index.html">Explorar</a>
             <a href="historial.html">Mis tutorías</a>
-            <a href="panel_tutor.html">Panel tutor</a>
+            <a href="perfil_estudiante.html">Mi perfil</a>
         </nav>
+
         <span class="usuario-chip" id="usuario-chip">Estudiante UVG</span>
     </header>
 
@@ -31,56 +34,61 @@
 
         <section class="perfil-grid">
             <aside class="panel perfil-resumen">
-                <div class="avatar grande" id="avatar-tutor">JP</div>
-                <h2 id="nombre-tutor">Juan Pérez</h2>
-                <p class="calificacion" id="rating-tutor">4.9 de 5</p>
+                <div class="avatar grande" id="avatar-tutor">T</div>
+                <h2 id="nombre-tutor">Cargando tutor...</h2>
+                <p class="calificacion" id="rating-tutor">Sin calificación</p>
+
                 <ul class="lista-limpia">
-                    <li><strong>Cursos</strong><br><span class="subtitulo" id="cursos-tutor"></span></li>
-                    <li><strong>Modalidad</strong><br><span class="subtitulo" id="modalidad-tutor"></span></li>
-                    <li><strong>Precio</strong><br><span class="subtitulo" id="precio-tutor"></span></li>
+                    <li>
+                        <strong>Cursos</strong>
+                        <span class="subtitulo" id="cursos-tutor">Cargando...</span>
+                    </li>
+                    <li>
+                        <strong>Modalidad</strong>
+                        <span class="subtitulo" id="modalidad-tutor">Cargando...</span>
+                    </li>
+                    <li>
+                        <strong>Precio</strong>
+                        <span class="subtitulo" id="precio-tutor">Cargando...</span>
+                    </li>
                 </ul>
             </aside>
 
             <article class="panel">
                 <h2>Sobre mí</h2>
-                <p class="subtitulo">
-                    Me gusta explicar los temas con ejemplos sencillos y ejercicios
-                    progresivos. La meta no es memorizar: es comprender por qué funciona.
-                </p>
-                <h3>Lo que trabajaremos</h3>
-                <div class="etiquetas">
-                    <span class="etiqueta">Repaso de teoría</span>
-                    <span class="etiqueta">Ejercicios guiados</span>
-                    <span class="etiqueta">Preparación de parciales</span>
-                </div>
+                <p class="subtitulo" id="experiencia-tutor">Cargando experiencia...</p>
+
+                <h3>Cursos que imparto</h3>
+                <div class="etiquetas" id="etiquetas-cursos"></div>
+
                 <div class="bloque-metodo">
-                    <span class="eyebrow">Método de trabajo</span>
-                    <h3>Comprender, practicar y aplicar.</h3>
-                    <p class="subtitulo">
-                        Cada sesión parte de tus dudas y termina con un plan claro
-                        para seguir practicando.
-                    </p>
+                    <span class="eyebrow">Información del tutor</span>
+                    <h3>Aprende a tu ritmo</h3>
+                    <p class="subtitulo">Selecciona uno de los horarios disponibles para solicitar una tutoría.</p>
                 </div>
             </article>
 
             <aside class="panel">
                 <h3>Elige un horario</h3>
+
                 <div class="campo">
                     <label for="fecha-perfil">Fecha</label>
                     <input id="fecha-perfil" type="date">
                 </div>
-                <div class="horarios">
-                    <button class="hora" data-hora="14:00" type="button">14:00</button>
-                    <button class="hora" data-hora="15:00" type="button">15:00</button>
-                    <button class="hora" data-hora="16:00" type="button">16:00</button>
+
+                <div class="horarios" id="horarios-tutor">
+                    <p class="subtitulo">Cargando horarios...</p>
                 </div>
+
                 <a class="boton ancho margen-superior" id="reservar" href="reservar_tutorias.html">
                     Reservar tutoría
                 </a>
             </aside>
         </section>
     </main>
-    <script src="js/app.js"></script>
+
+    <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
