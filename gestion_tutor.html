@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuto UVG | Mi perfil de tutor</title>
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+    <header class="encabezado">
+        <a class="marca" href="panel_tutor.html">
+            <span class="marca-icono">UVG</span>
+            <span>Tuto UVG</span>
+        </a>
+        <nav class="navegacion">
+            <a href="panel_tutor.html">Panel</a>
+            <a href="gestion_tutor.html">Mi perfil de tutor</a>
+        </nav>
+        <div class="zona-usuario">
+            <span class="usuario-chip" id="usuario-chip">Tutor UVG</span>
+            <button id="btn-cerrar-sesion" class="boton secundario pequeno" type="button">Cerrar sesión</button>
+        </div>
+    </header>
+
+    <main class="contenedor">
+        <div class="titulo-pagina">
+            <div>
+                <span class="eyebrow">Tu oferta</span>
+                <h1>Mi perfil de tutor</h1>
+                <p class="subtitulo">Esto es lo que verán los estudiantes al buscarte.</p>
+            </div>
+            <a class="boton secundario" href="panel_tutor.html">Volver al panel</a>
+        </div>
+
+        <section class="grid-gestion">
+            <form class="panel" id="form-cuenta" novalidate>
+                <h2>Datos de la cuenta</h2>
+
+                <div class="campo">
+                    <label for="cuenta-nombre">Nombre completo</label>
+                    <input id="cuenta-nombre" type="text" required>
+                </div>
+
+                <div class="campo">
+                    <label for="cuenta-correo">Correo institucional</label>
+                    <input id="cuenta-correo" type="email" required>
+                </div>
+
+                <div class="campo">
+                    <label for="cuenta-telefono">Teléfono / WhatsApp</label>
+                    <input id="cuenta-telefono" type="tel" inputmode="tel" placeholder="Ej. 5555-1234">
+                    <small class="ayuda-campo">Solo se comparte cuando una tutoría está confirmada.</small>
+                </div>
+
+                <div id="mensaje-cuenta"></div>
+                <button class="boton margen-superior" type="submit">Guardar cuenta</button>
+            </form>
+
+            <form class="panel" id="form-perfil-tutor" novalidate>
+                <h2>Información de tutoría</h2>
+
+                <div class="campo">
+                    <label for="tutor-experiencia">Experiencia / sobre mí</label>
+                    <textarea id="tutor-experiencia" maxlength="500" required></textarea>
+                </div>
+
+                <div class="campos-en-linea">
+                    <div class="campo">
+                        <label for="tutor-precio">Precio por hora (Q)</label>
+                        <input id="tutor-precio" type="number" min="0" step="0.01" required>
+                    </div>
+
+                    <div class="campo">
+                        <label for="tutor-modalidad">Modalidad</label>
+                        <select id="tutor-modalidad" required>
+                            <option value="VIRTUAL">Virtual</option>
+                            <option value="PRESENCIAL">Presencial</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="mensaje-perfil-tutor"></div>
+                <button class="boton margen-superior" type="submit">Guardar información</button>
+            </form>
+
+            <section class="panel">
+                <h2>Cursos que imparto</h2>
+                <div class="etiquetas" id="mis-cursos">
+                    <p class="subtitulo">Cargando cursos...</p>
+                </div>
+
+                <div class="campos-en-linea margen-superior">
+                    <div class="campo">
+                        <label for="select-curso">Agregar del catálogo</label>
+                        <select id="select-curso"></select>
+                    </div>
+                    <button class="boton boton-alineado" id="btn-agregar-curso" type="button">Agregar</button>
+                </div>
+
+                <form id="form-nuevo-curso" class="bloque-metodo" novalidate>
+                    <span class="eyebrow">¿No está tu curso?</span>
+                    <div class="campos-en-linea">
+                        <div class="campo">
+                            <label for="nuevo-curso-codigo">Código</label>
+                            <input id="nuevo-curso-codigo" type="text" placeholder="Ej. CC2008" maxlength="10">
+                        </div>
+                        <div class="campo">
+                            <label for="nuevo-curso-nombre">Nombre</label>
+                            <input id="nuevo-curso-nombre" type="text" placeholder="Ej. POO">
+                        </div>
+                    </div>
+                    <button class="boton secundario pequeno" type="submit">Crear y agregar</button>
+                </form>
+
+                <div id="mensaje-cursos" class="margen-superior"></div>
+            </section>
+
+            <section class="panel panel-ancho">
+                <h2>Horarios disponibles</h2>
+                <p class="subtitulo">Elige un día en el calendario y toca las horas en las que puedes dar tutoría. Toca otra vez una hora para quitarla.</p>
+
+                <div class="agenda">
+                    <div class="calendario">
+                        <div class="calendario-encabezado">
+                            <button type="button" class="boton secundario pequeno" id="mes-anterior" aria-label="Mes anterior">‹</button>
+                            <strong id="mes-actual"></strong>
+                            <button type="button" class="boton secundario pequeno" id="mes-siguiente" aria-label="Mes siguiente">›</button>
+                        </div>
+                        <div class="calendario-semana">
+                            <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span>
+                        </div>
+                        <div class="calendario-grid" id="calendario-grid"></div>
+                        <div class="calendario-leyenda">
+                            <span><i class="punto disponible"></i> Con horarios</span>
+                            <span><i class="punto reservado"></i> Con tutorías</span>
+                        </div>
+                    </div>
+
+                    <div class="selector-horas">
+                        <strong id="dia-seleccionado">Selecciona un día</strong>
+                        <div class="horas-grid" id="horas-grid"></div>
+                        <div class="calendario-leyenda">
+                            <span><i class="punto disponible"></i> Disponible</span>
+                            <span><i class="punto reservado"></i> Reservado</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="mensaje-horarios" class="margen-superior"></div>
+
+                <h3 class="margen-superior">Próximos horarios</h3>
+                <div id="lista-horarios">
+                    <p class="subtitulo">Cargando horarios...</p>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <footer class="pie">Tuto UVG · Proyecto académico</footer>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

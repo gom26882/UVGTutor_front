@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuto UVG | Mi perfil</title>
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+    <header class="encabezado">
+        <a class="marca" href="index.html">
+            <span class="marca-icono">UVG</span>
+            <span>Tuto UVG</span>
+        </a>
+        <nav class="navegacion">
+            <a href="index.html">Explorar</a>
+            <a href="historial.html">Mis tutorías</a>
+            <a href="perfil_estudiante.html">Mi perfil</a>
+        </nav>
+        <div class="zona-usuario">
+            <span class="usuario-chip" id="usuario-chip">Estudiante UVG</span>
+            <button id="btn-cerrar-sesion" class="boton secundario pequeno" type="button">Cerrar sesión</button>
+        </div>
+    </header>
+
+    <main class="contenedor" id="perfil-estudiante">
+        <div class="titulo-pagina">
+            <div>
+                <span class="eyebrow">Tu cuenta</span>
+                <h1>Mi perfil</h1>
+                <p class="subtitulo">Administra tus datos y los cursos que estás llevando.</p>
+            </div>
+            <a class="boton" href="index.html">Buscar tutores</a>
+        </div>
+
+        <section class="metricas">
+            <article class="tarjeta metrica">
+                <span class="subtitulo">Pendientes</span>
+                <strong id="est-pendientes">0</strong>
+            </article>
+            <article class="tarjeta metrica">
+                <span class="subtitulo">Confirmadas</span>
+                <strong id="est-confirmadas">0</strong>
+            </article>
+            <article class="tarjeta metrica">
+                <span class="subtitulo">Completadas</span>
+                <strong id="est-completadas">0</strong>
+            </article>
+        </section>
+
+        <section class="grid-gestion">
+            <form class="panel" id="form-cuenta" novalidate>
+                <div class="encabezado-perfil">
+                    <div class="avatar" id="estudiante-avatar">E</div>
+                    <div>
+                        <h2>Datos de la cuenta</h2>
+                        <span class="subtitulo">Carné: <strong id="estudiante-carnet">—</strong></span>
+                    </div>
+                </div>
+
+                <div class="campo">
+                    <label for="cuenta-nombre">Nombre completo</label>
+                    <input id="cuenta-nombre" type="text" required>
+                </div>
+
+                <div class="campo">
+                    <label for="cuenta-correo">Correo institucional</label>
+                    <input id="cuenta-correo" type="email" required>
+                </div>
+
+                <div class="campo">
+                    <label for="cuenta-telefono">Teléfono / WhatsApp</label>
+                    <input id="cuenta-telefono" type="tel" inputmode="tel" placeholder="Ej. 5555-1234">
+                    <small class="ayuda-campo">Solo se comparte cuando una tutoría está confirmada.</small>
+                </div>
+
+                <div id="mensaje-cuenta"></div>
+                <button class="boton margen-superior" type="submit">Guardar cambios</button>
+            </form>
+
+            <section class="panel">
+                <h2>Mis cursos</h2>
+                <p class="subtitulo">Los cursos que estás llevando este ciclo.</p>
+
+                <div class="etiquetas" id="mis-cursos">
+                    <p class="subtitulo">Cargando cursos...</p>
+                </div>
+
+                <div class="campos-en-linea margen-superior">
+                    <div class="campo">
+                        <label for="select-curso">Agregar curso</label>
+                        <select id="select-curso"></select>
+                    </div>
+                    <button class="boton boton-alineado" id="btn-agregar-curso" type="button">Agregar</button>
+                </div>
+
+                <div id="mensaje-cursos" class="margen-superior"></div>
+            </section>
+        </section>
+    </main>
+
+    <footer class="pie">Tuto UVG · Proyecto académico</footer>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
