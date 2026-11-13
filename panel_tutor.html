@@ -14,10 +14,9 @@
         </a>
         <nav class="navegacion">
             <a href="panel_tutor.html">Panel</a>
-            <a href="perfil_tutor.html">Mi perfil</a>
-            <a href="buscar_tutores.html">Vista estudiante</a>
+            <a href="gestion_tutor.html">Mi perfil de tutor</a>
         </nav>
-        <div style="display:flex; align-items:center; gap:10px;">
+        <div class="zona-usuario">
             <span class="usuario-chip" id="usuario-chip">Tutor UVG</span>
             <button id="btn-cerrar-sesion" class="boton secundario pequeno" type="button">Cerrar sesión</button>
         </div>
@@ -27,7 +26,7 @@
         <div class="titulo-pagina">
             <div>
                 <span class="eyebrow">Panel de gestión</span>
-                <h1>Hola, tutor</h1>
+                <h1 id="saludo-tutor">Hola, tutor</h1>
                 <p class="subtitulo">Organiza las solicitudes de tu comunidad.</p>
             </div>
         </div>
@@ -42,16 +41,18 @@
                 <strong id="confirmadas">0</strong>
             </article>
             <article class="tarjeta metrica">
-                <span class="subtitulo">Calificación</span>
-                <strong class="calificacion">4.9 de 5</strong>
+                <span class="subtitulo">Completadas</span>
+                <strong id="completadas">0</strong>
             </article>
         </section>
+
+        <div id="mensaje-panel" class="margen-superior"></div>
 
         <section class="panel tabla-wrap">
             <div class="titulo-pagina">
                 <div>
                     <h2>Solicitudes recientes</h2>
-                    <span class="subtitulo">Acepta o rechaza cada solicitud.</span>
+                    <span class="subtitulo">Acepta, rechaza, cancela o marca como completada cada tutoría.</span>
                 </div>
             </div>
             <table>
@@ -117,6 +118,7 @@
         </div>
     </main>
 
+    <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
 </body>

@@ -65,45 +65,35 @@ formularioLogin.addEventListener('submit', async function(evento) {
             throw new Error('La respuesta de la API no incluye los datos del usuario.')
         }
 
-        const rolRecibido =
-            usuario.tipoUsuario ??
-            usuario.tipo_usuario ??
-            usuario.rol ??
-            usuario.role ??
-            usuario.tipo
-
-        const rol = typeof rolRecibido === 'string'
-            ? rolRecibido.trim().toLowerCase()
-            : ''
-
         const token =
             data?.token ??
             data?.accessToken ??
             data?.access_token ??
             data?.data?.token
 
-        if (!['estudiante', 'tutor'].includes(rol) || !token) {
-            throw new Error(
-                'La respuesta de la API debe incluir un token y el rol del usuario.'
-            )
+        if (!token) {
+            throw new Error('La respuesta de la API no incluye el token de sesión.')
+        }
+
+        const payload = decodificarToken(token)
+        const rol = String(payload?.tipoUsuario || usuario.tipoUsuario || '').trim().toLowerCase()
+
+        if (!['estudiante', 'tutor'].includes(rol)) {
+            throw new Error('El token no contiene un rol válido (Estudiante o Tutor).')
         }
 
         const sesion = {
-            id: usuario.id ?? usuario._id,
+            id: payload.uid ?? usuario.id ?? usuario._id,
             nombre: usuario.nombre ?? usuario.name,
-            correo: usuario.correo ?? usuario.email,
+            correo: payload.correo ?? usuario.correo ?? usuario.email,
             rol,
             fechaInicioSesion: new Date().toISOString()
-        }
-
-        if (!sesion.nombre || !sesion.correo) {
-            throw new Error('La respuesta de la API no incluye el nombre o correo del usuario.')
         }
 
         localStorage.setItem('token', token)
         localStorage.setItem('usuario', JSON.stringify(sesion))
 
-        window.location.replace('index.html')
+        window.location.replace(INICIO_POR_ROL[rol])
     } catch (err) {
         mostrarMensaje(
             mensajeLogin,
@@ -140,6 +130,14 @@ formularioRegistro.addEventListener('submit', async function(evento) {
 
     if (!validarCorreoInstitucional(correo, mensajeRegistro, inputCorreoRegistro)) return
 
+    const telefono = document.getElementById('registro-telefono').value.trim()
+
+    if (!/^\+?[\d\s-]{8,16}$/.test(telefono) || telefono.replace(/\D/g, '').length < 8) {
+        mostrarMensaje(mensajeRegistro, 'Escribe un teléfono válido de al menos 8 dígitos (ej. 5555-1234).', 'error')
+        document.getElementById('registro-telefono').focus()
+        return
+    }
+
     if (!evaluarContrasena(contrasena).esSegura) {
         mostrarMensaje(mensajeRegistro, 'La contraseña no cumple todos los requisitos.', 'error')
         return
@@ -154,6 +152,7 @@ formularioRegistro.addEventListener('submit', async function(evento) {
         nombre,
         correo,
         contrasena,
+        telefono,
         tipoUsuario: rol === 'tutor' ? 'Tutor' : 'Estudiante'
     }
 
@@ -347,24 +346,14 @@ function validarCorreoInstitucional(correo, contenedor, input) {
 }
 
 function comprobarSesionExistente() {
-    const usuarioTexto = localStorage.getItem('usuario')
+    const sesion = obtenerSesionDesdeToken()
 
-    if (!usuarioTexto || !tokenVigente()) {
+    if (!sesion) {
         cerrarSesionLocal()
         return
     }
 
-    try {
-        const usuario = JSON.parse(usuarioTexto)
-
-        if (!usuario || !['estudiante', 'tutor'].includes(usuario.rol)) {
-            throw new Error('Sesión inválida')
-        }
-
-        window.location.replace('index.html')
-    } catch (err) {
-        cerrarSesionLocal()
-    }
+    window.location.replace(INICIO_POR_ROL[sesion.rol])
 }
 
 function mostrarMensaje(contenedor, mensaje, tipo) {
