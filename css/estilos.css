@@ -465,6 +465,32 @@ input[type="range"]:focus-visible {
     font-size: 2.4rem;
 }
 
+.avatar-miniatura {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 13px;
+    font-size: 1rem;
+}
+
+.persona-tabla {
+    display: flex;
+    min-width: 160px;
+    align-items: center;
+    gap: 12px;
+}
+
+.persona-tabla strong {
+    display: inline-block;
+    color: var(--texto);
+    line-height: 1.25;
+}
+
+.persona-tabla small {
+    display: inline-block;
+    margin-top: 4px;
+}
+
 .etiquetas {
     display: flex;
     flex-wrap: wrap;
@@ -1323,6 +1349,46 @@ th {
     display: block;
     margin-bottom: 8px;
     text-transform: capitalize;
+}
+
+.foto-perfil-editor {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 16px 0 22px;
+}
+
+.foto-perfil-editor > div:last-child {
+    display: grid;
+    justify-items: start;
+    gap: 8px;
+}
+
+.foto-perfil-input {
+    display: none;
+}
+
+.avatar-foto {
+    flex: 0 0 auto;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+    object-position: center;
+}
+
+.tarjeta-tutor .avatar img {
+    display: block;
+}
+
+@media (max-width: 520px) {
+    .foto-perfil-editor {
+        align-items: flex-start;
+        flex-direction: column;
+    }
 }
 
 .encabezado-perfil {

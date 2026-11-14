@@ -11,6 +11,135 @@ function escaparHTML(valor) {
         .replace(/'/g, "&#39;");
 }
 
+function pintarAvatar(elemento, fotoPerfil, nombre = "Usuario") {
+    if (!elemento) return;
+
+    if (fotoPerfil) {
+        elemento.innerHTML = `
+            <img
+                src="${escaparHTML(fotoPerfil)}"
+                alt="Fotografía de ${escaparHTML(nombre)}"
+            >
+        `;
+
+        return;
+    }
+
+    elemento.textContent = String(nombre)
+        .trim()
+        .charAt(0)
+        .toUpperCase() || "U";
+}
+function crearAvatarMiniatura(persona, nombrePredeterminado = "Usuario") {
+    const nombre = persona?.nombre || nombrePredeterminado;
+
+    if (persona?.fotoPerfil) {
+        return `
+            <div class="avatar avatar-miniatura">
+                <img
+                    src="${escaparHTML(persona.fotoPerfil)}"
+                    alt="Fotografía de ${escaparHTML(nombre)}"
+                >
+            </div>
+        `;
+    }
+
+    const inicial = nombre
+        .trim()
+        .charAt(0)
+        .toUpperCase() || "U";
+
+    return `
+        <div class="avatar avatar-miniatura">
+            ${escaparHTML(inicial)}
+        </div>
+    `;
+}
+
+function comprimirFotoPerfil(archivo) {
+    return new Promise((resolve, reject) => {
+        const formatosPermitidos = [
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+        ];
+
+        if (!formatosPermitidos.includes(archivo.type)) {
+            reject(new Error("Selecciona una imagen JPG, PNG o WEBP."));
+            return;
+        }
+
+        if (archivo.size > 5 * 1024 * 1024) {
+            reject(new Error("La imagen original no puede superar 5 MB."));
+            return;
+        }
+
+        const lector = new FileReader();
+
+        lector.addEventListener("error", () => {
+            reject(new Error("No se pudo leer la fotografía."));
+        });
+
+        lector.addEventListener("load", () => {
+            const imagen = new Image();
+
+            imagen.addEventListener("error", () => {
+                reject(new Error("El archivo seleccionado no es una imagen válida."));
+            });
+
+            imagen.addEventListener("load", () => {
+                const medidaOrigen = Math.min(
+                    imagen.naturalWidth,
+                    imagen.naturalHeight
+                );
+
+                const origenX = (
+                    imagen.naturalWidth - medidaOrigen
+                ) / 2;
+
+                const origenY = (
+                    imagen.naturalHeight - medidaOrigen
+                ) / 2;
+
+                const canvas = document.createElement("canvas");
+
+                canvas.width = 400;
+                canvas.height = 400;
+
+                const contexto = canvas.getContext("2d");
+
+                contexto.drawImage(
+                    imagen,
+                    origenX,
+                    origenY,
+                    medidaOrigen,
+                    medidaOrigen,
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height
+                );
+
+                const fotografiaComprimida = canvas.toDataURL(
+                    "image/webp",
+                    0.78
+                );
+
+                if (fotografiaComprimida.length > 700000) {
+                    reject(new Error("No se pudo reducir suficientemente la fotografía."));
+                    return;
+                }
+
+                resolve(fotografiaComprimida);
+            });
+
+            imagen.src = lector.result;
+        });
+
+        lector.readAsDataURL(archivo);
+    });
+}
+
 const ESTADOS_TUTORIA = {
     PENDIENTE: { texto: "Pendiente", clase: "pendiente" },
     ACEPTADA: { texto: "Confirmada", clase: "confirmada" },
@@ -20,7 +149,7 @@ const ESTADOS_TUTORIA = {
 };
 
 function telefonoValido(telefono) {
-    return /^\+?[\d\s-]{8,16}$/.test(telefono) && telefono.replace(/\D/g, "").length >= 8;
+    return /^\d{8}$/.test(telefono);
 }
 
 function crearContacto(persona, rolDeLaPersona) {
@@ -240,6 +369,13 @@ function normalizarTutorDesdeAPI(tutorOriginal, indice) {
             ?? String(indice),
 
         nombre: nombre,
+
+        fotoPerfil:
+            tutor.fotoPerfil
+            || usuario.fotoPerfil
+            || perfil.fotoPerfil
+            || "",
+
         iniciales: tutor.iniciales || iniciales,
         cursos: cursos,
         cursosDetalle: cursosDetalle,
@@ -305,9 +441,24 @@ function crearTarjetaTutor(tutor) {
         ? "Precio no indicado"
         : `Q${escaparHTML(tutor.precio)}/h`;
 
+    const avatarTutor = tutor.fotoPerfil
+        ? `
+            <div class="avatar ${tutor.color}">
+                <img
+                    src="${escaparHTML(tutor.fotoPerfil)}"
+                    alt="Fotografía de ${escaparHTML(tutor.nombre)}"
+                >
+            </div>
+        `
+        : `
+            <div class="avatar ${tutor.color}">
+                ${escaparHTML(tutor.iniciales)}
+            </div>
+        `;
+
     return `
         <article class="tarjeta tarjeta-tutor">
-            <div class="avatar ${tutor.color}">${escaparHTML(tutor.iniciales)}</div>
+            ${avatarTutor}
             <div>
                 <h3>${escaparHTML(tutor.nombre)}</h3>
                 <div class="etiquetas">
@@ -594,7 +745,11 @@ async function iniciarPerfil() {
         const tutor = await obtenerTutorActual()
 
         nombre.textContent = tutor.nombre
-        avatar.textContent = tutor.nombre.trim().charAt(0).toUpperCase()
+        pintarAvatar(
+            avatar,
+            tutor.fotoPerfil,
+            tutor.nombre
+        )
         cursos.textContent = tutor.cursos.map(curso => curso.nombre).join(' | ') || 'Sin cursos'
         modalidad.textContent = formatearModalidad(tutor.modalidad)
         precio.textContent = `Q${tutor.precioHora} por hora`
@@ -867,7 +1022,6 @@ async function iniciarReserva() {
 
                 window.location.href = 'confirmacion.html'
 
-                window.location.href = 'confirmacion.html'
             } catch (err) {
                 mensaje.textContent = err.message || 'No se pudo solicitar la tutoría.'
                 boton.disabled = false
@@ -924,7 +1078,17 @@ function crearFilaHistorial(tutoria) {
 
     return `
         <tr>
-            <td>${escaparHTML(tutoria.tutor?.nombre || "Tutor UVG")}</td>
+            <td>
+    <div class="persona-tabla">
+        ${crearAvatarMiniatura(tutoria.tutor, "Tutor UVG")}
+
+        <div>
+            <strong>
+                ${escaparHTML(tutoria.tutor?.nombre || "Tutor UVG")}
+            </strong>
+        </div>
+    </div>
+</td>
             <td>
                 ${escaparHTML(tutoria.curso?.nombre || "Curso")}
                 <br>
@@ -1111,8 +1275,19 @@ function crearFilaSolicitud(tutoria) {
     return `
         <tr>
             <td>
-                ${escaparHTML(estudiante.nombre || "Estudiante UVG")}
-                ${estudiante.carnet ? `<br><small>Carné ${escaparHTML(estudiante.carnet)}</small>` : ""}
+                <div class="persona-tabla">
+                    ${crearAvatarMiniatura(estudiante, "Estudiante UVG")}
+
+                    <div>
+                        <strong>
+                            ${escaparHTML(estudiante.nombre || "Estudiante UVG")}
+                        </strong>
+
+                        ${estudiante.carnet
+                            ? `<br><small>Carné ${escaparHTML(estudiante.carnet)}</small>`
+                            : ""}
+                    </div>
+                </div>
             </td>
             <td>
                 ${escaparHTML(tutoria.curso?.nombre || "Curso")}
@@ -1391,6 +1566,55 @@ function iniciarFormularioCuenta(perfil) {
 
     const telefono = seleccionar("#cuenta-telefono");
 
+    const inputFoto = seleccionar("#cuenta-foto");
+    const avatarCuenta =
+        seleccionar("#cuenta-avatar")
+        || seleccionar("#estudiante-avatar");
+
+    let fotoPerfil = perfil.fotoPerfil || "";
+
+    pintarAvatar(
+        avatarCuenta,
+        fotoPerfil,
+        perfil.nombre
+    );
+
+    if (telefono) {
+        telefono.addEventListener("input", () => {
+            telefono.value = telefono.value
+                .replace(/\D/g, "")
+                .slice(0, 8);
+        });
+    }
+
+    if (inputFoto) {
+        inputFoto.addEventListener("change", async () => {
+            const archivo = inputFoto.files?.[0];
+
+            if (!archivo) return;
+
+            mostrarMensajeEn(mensaje, "");
+
+            try {
+                fotoPerfil = await comprimirFotoPerfil(archivo);
+
+                pintarAvatar(
+                    avatarCuenta,
+                    fotoPerfil,
+                    nombre.value || perfil.nombre
+                );
+
+                mostrarMensajeEn(
+                    mensaje,
+                    "Fotografía lista. Presiona Guardar cambios.",
+                    "exito"
+                );
+            } catch (err) {
+                inputFoto.value = "";
+                mostrarMensajeEn(mensaje, err.message, "error");
+            }
+        });
+    }
     nombre.value = perfil.nombre || "";
     correo.value = perfil.correo || "";
     if (telefono) telefono.value = perfil.telefono || "";
@@ -1411,10 +1635,16 @@ function iniciarFormularioCuenta(perfil) {
             return;
         }
 
-        const nuevoTelefono = telefono ? telefono.value.trim() : undefined;
+        const nuevoTelefono = telefono
+            ? telefono.value.replace(/\D/g, "")
+            : undefined;
 
         if (nuevoTelefono && !telefonoValido(nuevoTelefono)) {
-            mostrarMensajeEn(mensaje, "Escribe un teléfono válido de al menos 8 dígitos (ej. 5555-1234).", "error");
+            mostrarMensajeEn(
+                mensaje,
+                "El teléfono debe contener exactamente 8 números.",
+                "error"
+            );
             return;
         }
 
@@ -1423,16 +1653,40 @@ function iniciarFormularioCuenta(perfil) {
         try {
             const respuesta = await apiRequest("/user/updateUser", {
                 method: "PUT",
-                body: JSON.stringify({ nombre: nombre.value.trim(), correo: nuevoCorreo, telefono: nuevoTelefono })
+                body: JSON.stringify({
+                    nombre: nombre.value.trim(),
+                    correo: nuevoCorreo,
+                    telefono: nuevoTelefono,
+                    fotoPerfil
+                })
             });
 
-            const usuario = obtenerUsuarioActual() || {};
-            usuario.nombre = respuesta.usuario.nombre;
-            usuario.correo = respuesta.usuario.correo;
-            localStorage.setItem("usuario", JSON.stringify(usuario));
+            const usuarioActualizado = respuesta.usuario;
+            const usuarioCache = obtenerUsuarioActual() || {};
+
+            fotoPerfil = usuarioActualizado.fotoPerfil || fotoPerfil;
+
+            pintarAvatar(
+                avatarCuenta,
+                fotoPerfil,
+                usuarioActualizado.nombre
+            );
+
+            usuarioCache.nombre = usuarioActualizado.nombre;
+            usuarioCache.correo = usuarioActualizado.correo;
+            usuarioCache.telefono = usuarioActualizado.telefono;
+            usuarioCache.fotoPerfil = fotoPerfil;
+
+            localStorage.setItem(
+                "usuario",
+                JSON.stringify(usuarioCache)
+            );
 
             const chip = seleccionar("#usuario-chip");
-            if (chip) chip.textContent = usuario.nombre;
+
+            if (chip) {
+                chip.textContent = usuarioActualizado.nombre;
+            }
 
             mostrarMensajeEn(mensaje, "Datos de la cuenta actualizados.", "exito");
         } catch (err) {
@@ -1862,7 +2116,6 @@ async function iniciarPerfilEstudiante() {
     }
 
     seleccionar("#estudiante-carnet").textContent = perfil.carnet || "—";
-    seleccionar("#estudiante-avatar").textContent = (perfil.nombre || "E").trim().charAt(0).toUpperCase();
 
     iniciarFormularioCuenta(perfil);
 

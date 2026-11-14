@@ -35,6 +35,15 @@
         <section class="grid-gestion">
             <form class="panel" id="form-cuenta" novalidate>
                 <h2>Datos de la cuenta</h2>
+                <div class="foto-perfil-editor">
+                    <div class="avatar avatar-foto" id="cuenta-avatar">T</div>
+
+                    <div>
+                        <label class="boton secundario pequeno" for="cuenta-foto">Cambiar fotografía</label>
+                        <input class="foto-perfil-input" id="cuenta-foto" type="file" accept="image/jpeg,image/png,image/webp">
+                        <small class="ayuda-campo">JPG, PNG o WEBP. La imagen se recortará automáticamente.</small>
+                    </div>
+                </div>
 
                 <div class="campo">
                     <label for="cuenta-nombre">Nombre completo</label>
@@ -48,7 +57,7 @@
 
                 <div class="campo">
                     <label for="cuenta-telefono">Teléfono / WhatsApp</label>
-                    <input id="cuenta-telefono" type="tel" inputmode="tel" placeholder="Ej. 5555-1234">
+                    <input id="cuenta-telefono" type="tel" inputmode="numeric" pattern="[0-9]{8}" minlength="8" maxlength="8" placeholder="Ej. 55551234" autocomplete="tel">
                     <small class="ayuda-campo">Solo se comparte cuando una tutoría está confirmada.</small>
                 </div>
 
@@ -96,22 +105,23 @@
                     </div>
                     <button class="boton boton-alineado" id="btn-agregar-curso" type="button">Agregar</button>
                 </div>
-
                 <form id="form-nuevo-curso" class="bloque-metodo" novalidate>
                     <span class="eyebrow">¿No está tu curso?</span>
+
                     <div class="campos-en-linea">
                         <div class="campo">
                             <label for="nuevo-curso-codigo">Código</label>
                             <input id="nuevo-curso-codigo" type="text" placeholder="Ej. CC2008" maxlength="10" autocomplete="off" spellcheck="false">
                         </div>
+
                         <div class="campo">
                             <label for="nuevo-curso-nombre">Nombre</label>
                             <input id="nuevo-curso-nombre" type="text" placeholder="Ej. POO" autocomplete="off" spellcheck="false">
                         </div>
                     </div>
+
                     <button class="boton secundario pequeno" type="submit">Crear y agregar</button>
                 </form>
-
                 <div id="mensaje-cursos" class="margen-superior"></div>
             </section>
 
