@@ -17,6 +17,14 @@ const inputConfirmarRegistro = document.getElementById('registro-confirmar')
 const mensajeRegistro = document.getElementById('mensaje-registro')
 const estadoConfirmacion = document.getElementById('estado-confirmacion')
 
+const inputTelefonoRegistro = document.getElementById('registro-telefono')
+
+inputTelefonoRegistro.addEventListener('input', () => {
+    inputTelefonoRegistro.value = inputTelefonoRegistro.value
+        .replace(/\D/g, '')
+        .slice(0, 8)
+})
+
 const requisitosVisuales = {
     longitud: document.getElementById('requisito-longitud'),
     mayuscula: document.getElementById('requisito-mayuscula'),
@@ -130,13 +138,21 @@ formularioRegistro.addEventListener('submit', async function(evento) {
 
     if (!validarCorreoInstitucional(correo, mensajeRegistro, inputCorreoRegistro)) return
 
-    const telefono = document.getElementById('registro-telefono').value.trim()
+    const telefono = document
+    .getElementById('registro-telefono')
+    .value
+    .replace(/\D/g, '')
 
-    if (!/^\+?[\d\s-]{8,16}$/.test(telefono) || telefono.replace(/\D/g, '').length < 8) {
-        mostrarMensaje(mensajeRegistro, 'Escribe un teléfono válido de al menos 8 dígitos (ej. 5555-1234).', 'error')
-        document.getElementById('registro-telefono').focus()
-        return
-    }
+    if (!/^\d{8}$/.test(telefono)) {
+    mostrarMensaje(
+        mensajeRegistro,
+        'El teléfono debe contener exactamente 8 números.',
+        'error'
+    );
+
+    document.getElementById('registro-telefono').focus();
+    return;
+}
 
     if (!evaluarContrasena(contrasena).esSegura) {
         mostrarMensaje(mensajeRegistro, 'La contraseña no cumple todos los requisitos.', 'error')

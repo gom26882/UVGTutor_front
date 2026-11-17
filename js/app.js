@@ -11,6 +11,135 @@ function escaparHTML(valor) {
         .replace(/'/g, "&#39;");
 }
 
+function pintarAvatar(elemento, fotoPerfil, nombre = "Usuario") {
+    if (!elemento) return;
+
+    if (fotoPerfil) {
+        elemento.innerHTML = `
+            <img
+                src="${escaparHTML(fotoPerfil)}"
+                alt="Fotografía de ${escaparHTML(nombre)}"
+            >
+        `;
+
+        return;
+    }
+
+    elemento.textContent = String(nombre)
+        .trim()
+        .charAt(0)
+        .toUpperCase() || "U";
+}
+function crearAvatarMiniatura(persona, nombrePredeterminado = "Usuario") {
+    const nombre = persona?.nombre || nombrePredeterminado;
+
+    if (persona?.fotoPerfil) {
+        return `
+            <div class="avatar avatar-miniatura">
+                <img
+                    src="${escaparHTML(persona.fotoPerfil)}"
+                    alt="Fotografía de ${escaparHTML(nombre)}"
+                >
+            </div>
+        `;
+    }
+
+    const inicial = nombre
+        .trim()
+        .charAt(0)
+        .toUpperCase() || "U";
+
+    return `
+        <div class="avatar avatar-miniatura">
+            ${escaparHTML(inicial)}
+        </div>
+    `;
+}
+
+function comprimirFotoPerfil(archivo) {
+    return new Promise((resolve, reject) => {
+        const formatosPermitidos = [
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+        ];
+
+        if (!formatosPermitidos.includes(archivo.type)) {
+            reject(new Error("Selecciona una imagen JPG, PNG o WEBP."));
+            return;
+        }
+
+        if (archivo.size > 5 * 1024 * 1024) {
+            reject(new Error("La imagen original no puede superar 5 MB."));
+            return;
+        }
+
+        const lector = new FileReader();
+
+        lector.addEventListener("error", () => {
+            reject(new Error("No se pudo leer la fotografía."));
+        });
+
+        lector.addEventListener("load", () => {
+            const imagen = new Image();
+
+            imagen.addEventListener("error", () => {
+                reject(new Error("El archivo seleccionado no es una imagen válida."));
+            });
+
+            imagen.addEventListener("load", () => {
+                const medidaOrigen = Math.min(
+                    imagen.naturalWidth,
+                    imagen.naturalHeight
+                );
+
+                const origenX = (
+                    imagen.naturalWidth - medidaOrigen
+                ) / 2;
+
+                const origenY = (
+                    imagen.naturalHeight - medidaOrigen
+                ) / 2;
+
+                const canvas = document.createElement("canvas");
+
+                canvas.width = 400;
+                canvas.height = 400;
+
+                const contexto = canvas.getContext("2d");
+
+                contexto.drawImage(
+                    imagen,
+                    origenX,
+                    origenY,
+                    medidaOrigen,
+                    medidaOrigen,
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height
+                );
+
+                const fotografiaComprimida = canvas.toDataURL(
+                    "image/webp",
+                    0.78
+                );
+
+                if (fotografiaComprimida.length > 700000) {
+                    reject(new Error("No se pudo reducir suficientemente la fotografía."));
+                    return;
+                }
+
+                resolve(fotografiaComprimida);
+            });
+
+            imagen.src = lector.result;
+        });
+
+        lector.readAsDataURL(archivo);
+    });
+}
+
 const ESTADOS_TUTORIA = {
     PENDIENTE: { texto: "Pendiente", clase: "pendiente" },
     ACEPTADA: { texto: "Confirmada", clase: "confirmada" },
@@ -20,7 +149,7 @@ const ESTADOS_TUTORIA = {
 };
 
 function telefonoValido(telefono) {
-    return /^\+?[\d\s-]{8,16}$/.test(telefono) && telefono.replace(/\D/g, "").length >= 8;
+    return /^\d{8}$/.test(telefono);
 }
 
 function crearContacto(persona, rolDeLaPersona) {
@@ -149,33 +278,124 @@ function normalizarTutorDesdeAPI(tutorOriginal, indice) {
     const tutor = tutorOriginal || {};
     const usuario = tutor.usuario || tutor.user || {};
     const perfil = tutor.perfil || tutor.profile || {};
-    const nombre = tutor.nombre || tutor.name || usuario.nombre || usuario.name
-        || perfil.nombre || perfil.name || "Tutor";
-    const cursos = convertirALista(
-        tutor.cursos || tutor.materias || tutor.courses || perfil.cursos || perfil.courses
-    ).map((valor) => typeof valor === "string" ? valor : (valor.nombre || valor.name || ""))
-        .filter(Boolean);
+
+    const nombre =
+        tutor.nombre
+        || tutor.name
+        || usuario.nombre
+        || usuario.name
+        || perfil.nombre
+        || perfil.name
+        || "Tutor";
+
+    const cursosOriginales = convertirALista(
+        tutor.cursos
+        || tutor.materias
+        || tutor.courses
+        || perfil.cursos
+        || perfil.courses
+    );
+
+    const cursosDetalle = cursosOriginales
+        .map(function (curso) {
+            if (typeof curso === "string") {
+                return {
+                    id: "",
+                    nombre: curso
+                };
+            }
+
+            return {
+                id: curso._id || curso.id || "",
+                nombre: curso.nombre || curso.name || ""
+            };
+        })
+        .filter(function (curso) {
+            return curso.nombre;
+        });
+
+    const cursos = cursosDetalle.map(function (curso) {
+        return curso.nombre;
+    });
+
     const modalidad = convertirALista(
-        tutor.modalidad || tutor.modalidades || tutor.modality || perfil.modalidad
-    ).map((valor) => typeof valor === "string" ? valor : (valor.nombre || valor.name || ""))
+        tutor.modalidad
+        || tutor.modalidades
+        || tutor.modality
+        || perfil.modalidad
+    )
+        .map(function (valor) {
+            if (typeof valor === "string") {
+                return valor;
+            }
+
+            return valor.nombre || valor.name || "";
+        })
         .filter(Boolean);
-    const precioBruto = tutor.precio ?? tutor.precioHora ?? tutor.price
-        ?? tutor.pricePerHour ?? perfil.precio ?? perfil.precioHora;
+
+    const precioBruto =
+        tutor.precio
+        ?? tutor.precioHora
+        ?? tutor.price
+        ?? tutor.pricePerHour
+        ?? perfil.precio
+        ?? perfil.precioHora;
+
     const precio = Number(precioBruto);
-    const ratingBruto = tutor.rating ?? tutor.calificacion ?? tutor.promedioCalificacion;
+
+    const ratingBruto =
+        tutor.rating
+        ?? tutor.calificacion
+        ?? tutor.promedioCalificacion;
+
     const rating = Number(ratingBruto);
-    const iniciales = nombre.trim().split(/\s+/).slice(0, 2)
-        .map((parte) => parte.charAt(0).toUpperCase()).join("") || "T";
+
+    const iniciales = nombre
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map(function (parte) {
+            return parte.charAt(0).toUpperCase();
+        })
+        .join("") || "T";
 
     return {
-        id: tutor.id ?? tutor._id ?? tutor.usuarioId ?? usuario.id ?? usuario._id ?? indice,
-        nombre,
+        id:
+            tutor.id
+            ?? tutor._id
+            ?? tutor.usuarioId
+            ?? usuario.id
+            ?? usuario._id
+            ?? String(indice),
+
+        nombre: nombre,
+
+        fotoPerfil:
+            tutor.fotoPerfil
+            || usuario.fotoPerfil
+            || perfil.fotoPerfil
+            || "",
+
         iniciales: tutor.iniciales || iniciales,
-        cursos,
-        modalidad,
-        experiencia: tutor.experiencia || tutor.experience || perfil.experiencia || "",
-        precio: Number.isFinite(precio) && precio >= 0 ? precio : null,
-        rating: Number.isFinite(rating) && rating > 0 ? rating : null,
+        cursos: cursos,
+        cursosDetalle: cursosDetalle,
+        modalidad: modalidad,
+        experiencia:
+            tutor.experiencia
+            || tutor.experience
+            || perfil.experiencia
+            || "",
+
+        precio:
+            Number.isFinite(precio) && precio >= 0
+                ? precio
+                : null,
+
+        rating:
+            Number.isFinite(rating) && rating > 0
+                ? rating
+                : null,
+
         color: indice % 2 === 1 ? "alternativo" : ""
     };
 }
@@ -221,9 +441,24 @@ function crearTarjetaTutor(tutor) {
         ? "Precio no indicado"
         : `Q${escaparHTML(tutor.precio)}/h`;
 
+    const avatarTutor = tutor.fotoPerfil
+        ? `
+            <div class="avatar ${tutor.color}">
+                <img
+                    src="${escaparHTML(tutor.fotoPerfil)}"
+                    alt="Fotografía de ${escaparHTML(tutor.nombre)}"
+                >
+            </div>
+        `
+        : `
+            <div class="avatar ${tutor.color}">
+                ${escaparHTML(tutor.iniciales)}
+            </div>
+        `;
+
     return `
         <article class="tarjeta tarjeta-tutor">
-            <div class="avatar ${tutor.color}">${escaparHTML(tutor.iniciales)}</div>
+            ${avatarTutor}
             <div>
                 <h3>${escaparHTML(tutor.nombre)}</h3>
                 <div class="etiquetas">
@@ -235,7 +470,7 @@ function crearTarjetaTutor(tutor) {
             </div>
             <div>
                 <div class="precio">${precio}</div>
-                <a class="boton pequeno" href="perfil_tutor.html?id=${encodeURIComponent(tutor.id)}">
+                <a class="boton pequeno" data-tutor-id="${escaparHTML(tutor.id)}" href="perfil_tutor.html?id=${encodeURIComponent(tutor.id)}">
                     Ver perfil
                 </a>
             </div>
@@ -251,10 +486,23 @@ function iniciarBusqueda() {
     const modalidad = seleccionar("#modalidad")
     const precio = seleccionar("#precio")
     const precioMostrado = seleccionar("#precio-valor")
+
+    function actualizarBarraPrecio() {
+        const minimo = Number(precio.min);
+        const maximo = Number(precio.max);
+        const valor = Number(precio.value);
+        const porcentaje = ((valor - minimo) / (maximo - minimo)) * 100;
+
+        precio.style.setProperty("--progreso", `${porcentaje}%`);
+
+        if (precioMostrado) {
+            precioMostrado.textContent = `Q${valor}`;
+        }
+    }
+
     const contador = seleccionar("#contador")
 
     let numeroPeticion = 0
-    let precioMaximoInicial = Number(precio.max)
 
     cargarOpcionesCursos(curso, { valor: 'nombre', textoTodos: 'Todos los cursos' })
 
@@ -300,14 +548,6 @@ function iniciarBusqueda() {
             const listaRecibida = extraerTutoresDeRespuesta(respuesta)
             tutoresDB = listaRecibida.map(normalizarTutorDesdeAPI)
 
-            const precioMasAlto = Math.max(0, ...tutoresDB.map(tutor => tutor.precio || 0))
-            const nuevoMaximo = Math.max(precioMaximoInicial, Math.ceil(precioMasAlto / 5) * 5)
-
-            if (nuevoMaximo > Number(precio.max)) {
-                const estabaEnElMaximo = Number(precio.value) === Number(precio.max)
-                precio.max = nuevoMaximo
-                if (estabaEnElMaximo) precio.value = nuevoMaximo
-            }
 
             filtrarTutores()
         } catch (err) {
@@ -321,7 +561,10 @@ function iniciarBusqueda() {
 
     texto.addEventListener("input", filtrarTutores)
     curso.addEventListener("change", filtrarTutores)
-    precio.addEventListener("input", filtrarTutores)
+    precio.addEventListener("input", () => {
+        actualizarBarraPrecio();
+        filtrarTutores();
+    });
 
     modalidad.addEventListener("change", cargarTutores)
 
@@ -332,16 +575,44 @@ function iniciarBusqueda() {
 
     if (botonLimpiar) {
         botonLimpiar.addEventListener("click", () => {
-            texto.value = ""
-            curso.value = ""
-            modalidad.value = ""
-            precio.value = precio.max
-            cargarTutores()
-        })
+            texto.value = "";
+            curso.value = "";
+            modalidad.value = "";
+            precio.value = precio.max;
+
+            actualizarBarraPrecio();
+            cargarTutores();
+        });
+    }
+    lista.addEventListener("click", function (evento) {
+    const enlaceTutor = evento.target.closest("[data-tutor-id]");
+
+    if (!enlaceTutor) {
+        return;
     }
 
+    const idTutor = enlaceTutor.dataset.tutorId;
+
+    const tutorSeleccionado = tutoresDB.find(function (tutor) {
+        return String(tutor.id) === String(idTutor);
+    });
+
+    if (tutorSeleccionado) {
+        localStorage.setItem(
+            "tutouvg_tutor_actual",
+            JSON.stringify(tutorSeleccionado)
+        );
+
+        localStorage.setItem(
+            "tutouvg_tutor",
+            String(tutorSeleccionado.id)
+        );
+    }
+});
+    actualizarBarraPrecio()
     cargarTutores()
 }
+
 
 async function obtenerTutorActual() {
     const parametros = new URLSearchParams(window.location.search)
@@ -361,6 +632,7 @@ async function obtenerTutorActual() {
     localStorage.setItem('tutouvg_tutor', tutor._id)
 
     return tutor
+
 }
 
 function obtenerLimitesDelAnioActual() {
@@ -473,7 +745,11 @@ async function iniciarPerfil() {
         const tutor = await obtenerTutorActual()
 
         nombre.textContent = tutor.nombre
-        avatar.textContent = tutor.nombre.trim().charAt(0).toUpperCase()
+        pintarAvatar(
+            avatar,
+            tutor.fotoPerfil,
+            tutor.nombre
+        )
         cursos.textContent = tutor.cursos.map(curso => curso.nombre).join(' | ') || 'Sin cursos'
         modalidad.textContent = formatearModalidad(tutor.modalidad)
         precio.textContent = `Q${tutor.precioHora} por hora`
@@ -742,8 +1018,10 @@ async function iniciarReserva() {
                 localStorage.removeItem('tutouvg_fecha')
                 localStorage.removeItem('tutouvg_hora')
                 localStorage.removeItem('tutouvg_horarioISO')
+                localStorage.setItem('tutouvg_confirmacion_tutor', tutor.nombre || 'tu tutor')
 
                 window.location.href = 'confirmacion.html'
+
             } catch (err) {
                 mensaje.textContent = err.message || 'No se pudo solicitar la tutoría.'
                 boton.disabled = false
@@ -800,7 +1078,17 @@ function crearFilaHistorial(tutoria) {
 
     return `
         <tr>
-            <td>${escaparHTML(tutoria.tutor?.nombre || "Tutor UVG")}</td>
+            <td>
+    <div class="persona-tabla">
+        ${crearAvatarMiniatura(tutoria.tutor, "Tutor UVG")}
+
+        <div>
+            <strong>
+                ${escaparHTML(tutoria.tutor?.nombre || "Tutor UVG")}
+            </strong>
+        </div>
+    </div>
+</td>
             <td>
                 ${escaparHTML(tutoria.curso?.nombre || "Curso")}
                 <br>
@@ -987,8 +1275,19 @@ function crearFilaSolicitud(tutoria) {
     return `
         <tr>
             <td>
-                ${escaparHTML(estudiante.nombre || "Estudiante UVG")}
-                ${estudiante.carnet ? `<br><small>Carné ${escaparHTML(estudiante.carnet)}</small>` : ""}
+                <div class="persona-tabla">
+                    ${crearAvatarMiniatura(estudiante, "Estudiante UVG")}
+
+                    <div>
+                        <strong>
+                            ${escaparHTML(estudiante.nombre || "Estudiante UVG")}
+                        </strong>
+
+                        ${estudiante.carnet
+                            ? `<br><small>Carné ${escaparHTML(estudiante.carnet)}</small>`
+                            : ""}
+                    </div>
+                </div>
             </td>
             <td>
                 ${escaparHTML(tutoria.curso?.nombre || "Curso")}
@@ -1023,6 +1322,10 @@ function iniciarPanel() {
     const tituloModal = seleccionar("#titulo-rechazo");
     const eyebrowModal = modalRechazo.querySelector(".eyebrow");
     const botonConfirmarModal = formularioRechazo.querySelector('button[type="submit"]');
+    const modalAceptada = seleccionar("#modal-tutoria-aceptada");
+    const tituloAceptada = seleccionar("#titulo-tutoria-aceptada");
+    const detalleAceptada = seleccionar("#detalle-tutoria-aceptada");
+    const contactoAceptada = seleccionar("#contacto-tutoria-aceptada");
 
     let solicitudes = [];
     let idSeleccionada = null;
@@ -1143,6 +1446,21 @@ function iniciarPanel() {
         idSeleccionada = null;
     }
 
+    function mostrarTutoriaAceptada(solicitud) {
+        const estudiante = solicitud.estudiante || {};
+        const nombre = estudiante.nombre || "el estudiante";
+
+        tituloAceptada.textContent = `Tutoría para ${nombre} aceptada`;
+
+        detalleAceptada.textContent = `${solicitud.curso?.nombre || "Tutoría"} · ${formatearFecha(solicitud.fecha)} a las ${formatearHora(solicitud.fecha)}`;
+
+        contactoAceptada.innerHTML =
+            crearContacto(estudiante, "estudiante") ||
+            '<p class="subtitulo">El estudiante todavía no agregó un teléfono de contacto.</p>';
+
+        abrirModal(modalAceptada);
+    }
+
     cuerpoTabla.addEventListener("click", async evento => {
         const boton = evento.target.closest("button[data-id]");
         if (!boton) return;
@@ -1162,6 +1480,9 @@ function iniciarPanel() {
 
         try {
             await ejecutarAccion(solicitud._id, accion);
+            if (accion === "aceptar") {
+                mostrarTutoriaAceptada(solicitud);
+            }
             mostrarMensajeEn(
                 mensajePanel,
                 accion === "aceptar" ? "Tutoría aceptada. El horario se marcó como ocupado." : "Tutoría marcada como completada.",
@@ -1211,7 +1532,27 @@ function iniciarPanel() {
         cerrarModalMotivo
     );
 
+    configurarCierreModal(
+        modalAceptada,
+        [seleccionar("#cerrar-tutoria-aceptada")],
+        () => cerrarModal(modalAceptada)
+    );
+
     cargarSolicitudes();
+}
+
+function iniciarConfirmacion() {
+    const nombreTutor = seleccionar("#confirmacion-nombre-tutor");
+
+    if (!nombreTutor) {
+        return;
+    }
+
+    nombreTutor.textContent =
+        localStorage.getItem("tutouvg_confirmacion_tutor") ||
+        "tu tutor";
+
+    localStorage.removeItem("tutouvg_confirmacion_tutor");
 }
 
 function iniciarFormularioCuenta(perfil) {
@@ -1225,6 +1566,55 @@ function iniciarFormularioCuenta(perfil) {
 
     const telefono = seleccionar("#cuenta-telefono");
 
+    const inputFoto = seleccionar("#cuenta-foto");
+    const avatarCuenta =
+        seleccionar("#cuenta-avatar")
+        || seleccionar("#estudiante-avatar");
+
+    let fotoPerfil = perfil.fotoPerfil || "";
+
+    pintarAvatar(
+        avatarCuenta,
+        fotoPerfil,
+        perfil.nombre
+    );
+
+    if (telefono) {
+        telefono.addEventListener("input", () => {
+            telefono.value = telefono.value
+                .replace(/\D/g, "")
+                .slice(0, 8);
+        });
+    }
+
+    if (inputFoto) {
+        inputFoto.addEventListener("change", async () => {
+            const archivo = inputFoto.files?.[0];
+
+            if (!archivo) return;
+
+            mostrarMensajeEn(mensaje, "");
+
+            try {
+                fotoPerfil = await comprimirFotoPerfil(archivo);
+
+                pintarAvatar(
+                    avatarCuenta,
+                    fotoPerfil,
+                    nombre.value || perfil.nombre
+                );
+
+                mostrarMensajeEn(
+                    mensaje,
+                    "Fotografía lista. Presiona Guardar cambios.",
+                    "exito"
+                );
+            } catch (err) {
+                inputFoto.value = "";
+                mostrarMensajeEn(mensaje, err.message, "error");
+            }
+        });
+    }
     nombre.value = perfil.nombre || "";
     correo.value = perfil.correo || "";
     if (telefono) telefono.value = perfil.telefono || "";
@@ -1245,10 +1635,16 @@ function iniciarFormularioCuenta(perfil) {
             return;
         }
 
-        const nuevoTelefono = telefono ? telefono.value.trim() : undefined;
+        const nuevoTelefono = telefono
+            ? telefono.value.replace(/\D/g, "")
+            : undefined;
 
         if (nuevoTelefono && !telefonoValido(nuevoTelefono)) {
-            mostrarMensajeEn(mensaje, "Escribe un teléfono válido de al menos 8 dígitos (ej. 5555-1234).", "error");
+            mostrarMensajeEn(
+                mensaje,
+                "El teléfono debe contener exactamente 8 números.",
+                "error"
+            );
             return;
         }
 
@@ -1257,16 +1653,40 @@ function iniciarFormularioCuenta(perfil) {
         try {
             const respuesta = await apiRequest("/user/updateUser", {
                 method: "PUT",
-                body: JSON.stringify({ nombre: nombre.value.trim(), correo: nuevoCorreo, telefono: nuevoTelefono })
+                body: JSON.stringify({
+                    nombre: nombre.value.trim(),
+                    correo: nuevoCorreo,
+                    telefono: nuevoTelefono,
+                    fotoPerfil
+                })
             });
 
-            const usuario = obtenerUsuarioActual() || {};
-            usuario.nombre = respuesta.usuario.nombre;
-            usuario.correo = respuesta.usuario.correo;
-            localStorage.setItem("usuario", JSON.stringify(usuario));
+            const usuarioActualizado = respuesta.usuario;
+            const usuarioCache = obtenerUsuarioActual() || {};
+
+            fotoPerfil = usuarioActualizado.fotoPerfil || fotoPerfil;
+
+            pintarAvatar(
+                avatarCuenta,
+                fotoPerfil,
+                usuarioActualizado.nombre
+            );
+
+            usuarioCache.nombre = usuarioActualizado.nombre;
+            usuarioCache.correo = usuarioActualizado.correo;
+            usuarioCache.telefono = usuarioActualizado.telefono;
+            usuarioCache.fotoPerfil = fotoPerfil;
+
+            localStorage.setItem(
+                "usuario",
+                JSON.stringify(usuarioCache)
+            );
 
             const chip = seleccionar("#usuario-chip");
-            if (chip) chip.textContent = usuario.nombre;
+
+            if (chip) {
+                chip.textContent = usuarioActualizado.nombre;
+            }
 
             mostrarMensajeEn(mensaje, "Datos de la cuenta actualizados.", "exito");
         } catch (err) {
@@ -1696,7 +2116,6 @@ async function iniciarPerfilEstudiante() {
     }
 
     seleccionar("#estudiante-carnet").textContent = perfil.carnet || "—";
-    seleccionar("#estudiante-avatar").textContent = (perfil.nombre || "E").trim().charAt(0).toUpperCase();
 
     iniciarFormularioCuenta(perfil);
 
@@ -1726,6 +2145,8 @@ document.addEventListener("DOMContentLoaded", () => {
     iniciarReserva();
     iniciarHistorial();
     iniciarPanel();
+    iniciarConfirmacion();
+
     iniciarGestionTutor();
     iniciarPerfilEstudiante();
 });

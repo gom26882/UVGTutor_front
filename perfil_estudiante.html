@@ -51,16 +51,24 @@
         <section class="grid-gestion">
             <form class="panel" id="form-cuenta" novalidate>
                 <div class="encabezado-perfil">
-                    <div class="avatar" id="estudiante-avatar">E</div>
+                    <div class="foto-perfil-editor">
+                        <div class="avatar avatar-foto" id="estudiante-avatar">E</div>
+
+                        <div>
+                            <label class="boton secundario pequeno" for="cuenta-foto">Cambiar fotografía</label>
+                            <input class="foto-perfil-input" id="cuenta-foto" type="file" accept="image/jpeg,image/png,image/webp">
+                            <small class="ayuda-campo">JPG, PNG o WEBP. La imagen se recortará automáticamente.</small>
+                        </div>
+                    </div>
                     <div>
-                        <h2>Datos de la cuenta</h2>
+                        <h2>Información de estudiante</h2>
                         <span class="subtitulo">Carné: <strong id="estudiante-carnet">—</strong></span>
                     </div>
                 </div>
 
                 <div class="campo">
                     <label for="cuenta-nombre">Nombre completo</label>
-                    <input id="cuenta-nombre" type="text" required>
+                    <input id="cuenta-nombre" type="text" autocomplete="off" spellcheck="false" required>
                 </div>
 
                 <div class="campo">
@@ -70,7 +78,7 @@
 
                 <div class="campo">
                     <label for="cuenta-telefono">Teléfono / WhatsApp</label>
-                    <input id="cuenta-telefono" type="tel" inputmode="tel" placeholder="Ej. 5555-1234">
+                    <input id="cuenta-telefono" type="tel" inputmode="numeric" pattern="[0-9]{8}" minlength="8" maxlength="8" placeholder="Ej. 55551234" autocomplete="tel">
                     <small class="ayuda-campo">Solo se comparte cuando una tutoría está confirmada.</small>
                 </div>
 
